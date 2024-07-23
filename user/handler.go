@@ -40,18 +40,6 @@ func init() {
 	}
 }
 
-// var (
-// 	googleOAuthConfig = &oauth2.Config{
-// 		RedirectURL:  "http://localhost:8080/api/v1/callback", //URL ini harus sama dengan redirect_uri pada google developer console
-// 		ClientID:     os.Getenv("CLIENT_ID"),
-// 		ClientSecret: os.Getenv("CLIENT_SECRET"),
-// 		// scopes API URL bisa didapatkan di https://developers.google.com/identity/protocols/oauth2/scopes
-// 		Scopes:   []string{"https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email"},
-// 		Endpoint: google.Endpoint,
-// 	}
-// 	randomState = "random"
-// )
-
 func (h *UserHandler) RegisterUser(c *gin.Context) {
 	var input RegisterUserInput
 
