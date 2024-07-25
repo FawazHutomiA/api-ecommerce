@@ -19,6 +19,7 @@ func SetupUserRoutes(api *gin.RouterGroup, db *gorm.DB) {
 	api.POST("/email_checkers", userHandler.CheckEmailAvailability)
 	api.POST("/avatars", AuthMiddleware(authService, userService), userHandler.UploadAvatar)
 	api.GET("/user", AuthMiddleware(authService, userService), userHandler.GetUserByJWT)
+	api.GET("/users", AuthMiddleware(authService, userService), userHandler.GetUsers)
 
 	api.POST("/login", userHandler.HandleLogin)
 	api.GET("/callback", userHandler.HandleCallback)

@@ -213,6 +213,20 @@ func (h *UserHandler) GetUserByJWT(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+func (h *UserHandler) GetUsers(c *gin.Context) {
+	users, err := h.userService.GetUsers()
+
+	if err != nil {
+		response := helper.APIResponse("Error to get users", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	response := helper.APIResponse("List of users", http.StatusOK, "success", FormatUsers(users))
+	c.JSON(http.StatusOK, response)
+
+}
+
 func (h *UserHandler) HandleLogin(c *gin.Context) {
 	url := googleOauthConfig.AuthCodeURL(randomState)
 	c.Redirect(http.StatusTemporaryRedirect, url)

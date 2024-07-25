@@ -13,6 +13,7 @@ type Service interface {
 	CheckEmail(input CheckEmailInput) (User, error)
 	SaveAvatar(ID int, fileLocation string) (User, error)
 	GetUserByID(ID int) (User, error)
+	GetUsers() ([]User, error)
 	GetOrSaveUser(userGoogle GoogleUser) (User, error)
 }
 
@@ -127,6 +128,14 @@ func (s *service) GetUserByID(ID int) (User, error) {
 	}
 
 	return user, nil
+}
+
+func (s *service) GetUsers() ([]User, error) {
+	users, err := s.repository.FindAll()
+	if err != nil {
+		return users, err
+	}
+	return users, nil
 }
 
 func (s *service) GetOrSaveUser(userGoogle GoogleUser) (User, error) {
