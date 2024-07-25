@@ -257,80 +257,26 @@ func (h *UserHandler) HandleCallback(c *gin.Context) {
 		return
 	}
 
-	emailInput := CheckEmailInput{Email: userInfo.Email}
-	isEmailAvailable, err := h.userService.IsEmailAvailable(emailInput)
-	if err != nil {
-		errorMessage := gin.H{"errors": "Server error"}
+	userLogin, err := h.userService.GetOrSaveUser(userInfo)
 
-		response := helper.APIResponse("Email checking failed.", http.StatusUnprocessableEntity, "error", errorMessage)
-		c.JSON(http.StatusUnprocessableEntity, response)
+	if err != nil {
+		response := helper.APIResponse("Login failed", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
 		return
 	}
 
-	if isEmailAvailable {
-		registerInput := RegisterUserInput{
-			Name:       userInfo.Name,
-			Email:      userInfo.Email,
-			Occupation: "",
-			Password:   "",
-			IsGoogle:   true,
-		}
-		newUser, err := h.userService.RegisterUser(registerInput)
-		if err != nil {
-			response := helper.APIResponse("Account failed to register", http.StatusBadRequest, "error", nil)
-			c.JSON(http.StatusBadRequest, response)
-			return
-		}
+	tokenLogin, err := h.authService.GenerateToken(userLogin.ID)
 
-		tokenRegister, err := h.authService.GenerateToken(newUser.ID)
-
-		if err != nil {
-			response := helper.APIResponse("Account failed to register", http.StatusBadRequest, "error", nil)
-			c.JSON(http.StatusBadRequest, response)
-			return
-		}
-
-		formatter := FormatUser(newUser, tokenRegister)
-
-		response := helper.APIResponse("Account has been registered", http.StatusOK, "success", formatter)
-
-		c.JSON(http.StatusOK, response)
-	} else {
-		getUserByEmail, err := h.userService.CheckEmail(emailInput)
-		if err != nil {
-			response := helper.APIResponse("Email checking failed.", http.StatusBadRequest, "error", nil)
-			c.JSON(http.StatusBadRequest, response)
-			return
-		}
-
-		loginInput := LoginInput{
-			Email:    getUserByEmail.Email,
-			Password: "",
-		}
-
-		loggedInUser, err := h.userService.Login(loginInput)
-
-		if err != nil {
-			errorMessage := gin.H{"errors": err.Error()}
-
-			response := helper.APIResponse("Login failed", http.StatusUnprocessableEntity, "error", errorMessage)
-			c.JSON(http.StatusUnprocessableEntity, response)
-			return
-		}
-
-		tokenLogin, err := h.authService.GenerateToken(loggedInUser.ID)
-
-		if err != nil {
-			response := helper.APIResponse("Login failed", http.StatusBadRequest, "error", nil)
-			c.JSON(http.StatusBadRequest, response)
-			return
-		}
-
-		formatter := FormatUser(loggedInUser, tokenLogin)
-
-		response := helper.APIResponse("Successfully logged in", http.StatusOK, "success", formatter)
-
-		c.JSON(http.StatusOK, response)
+	if err != nil {
+		response := helper.APIResponse("Login failed", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
 	}
+
+	formatter := FormatUser(userLogin, tokenLogin)
+
+	response := helper.APIResponse("Successfully logged in", http.StatusOK, "success", formatter)
+
+	c.JSON(http.StatusOK, response)
 
 }

@@ -13,6 +13,7 @@ type Service interface {
 	CheckEmail(input CheckEmailInput) (User, error)
 	SaveAvatar(ID int, fileLocation string) (User, error)
 	GetUserByID(ID int) (User, error)
+	GetOrSaveUser(userGoogle GoogleUser) (User, error)
 }
 
 type service struct {
@@ -126,4 +127,30 @@ func (s *service) GetUserByID(ID int) (User, error) {
 	}
 
 	return user, nil
+}
+
+func (s *service) GetOrSaveUser(userGoogle GoogleUser) (User, error) {
+	userByEmail, err := s.repository.FindByEmail(userGoogle.Email)
+
+	if err != nil {
+		return userByEmail, err
+	}
+
+	if userByEmail.ID == 0 {
+		user := User{
+			Name:       userGoogle.Name,
+			Email:      userGoogle.Email,
+			Occupation: "",
+			IsGoogle:   true,
+		}
+
+		newUser, err := s.repository.Save(user)
+		if err != nil {
+			return newUser, err
+		}
+
+		return newUser, nil
+	}
+
+	return userByEmail, nil
 }
