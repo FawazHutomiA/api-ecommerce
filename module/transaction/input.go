@@ -1,6 +1,6 @@
 package transaction
 
-import "example/user"
+import "example/module/user"
 
 type GetCampaignTransactionsInput struct {
 	ID   int `uri:"id" binding:"required"`

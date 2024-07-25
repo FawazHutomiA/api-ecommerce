@@ -2,7 +2,7 @@ package transaction
 
 import (
 	"example/helper"
-	"example/user"
+	"example/module/user"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

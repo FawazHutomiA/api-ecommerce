@@ -1,9 +1,9 @@
 package router
 
 import (
-	"example/campaign"
-	"example/transaction"
-	"example/user"
+	"example/module/campaign"
+	"example/module/transaction"
+	"example/module/user"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"

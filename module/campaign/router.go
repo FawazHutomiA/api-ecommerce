@@ -2,7 +2,7 @@ package campaign
 
 import (
 	"example/auth"
-	"example/user"
+	"example/module/user"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

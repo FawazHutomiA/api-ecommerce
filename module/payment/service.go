@@ -1,7 +1,7 @@
 package payment
 
 import (
-	"example/user"
+	"example/module/user"
 	"os"
 	"strconv"
 

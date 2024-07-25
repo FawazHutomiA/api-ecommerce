@@ -2,9 +2,9 @@ package transaction
 
 import (
 	"example/auth"
-	"example/campaign"
-	"example/payment"
-	"example/user"
+	"example/module/campaign"
+	"example/module/payment"
+	"example/module/user"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

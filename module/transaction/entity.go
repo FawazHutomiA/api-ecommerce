@@ -1,8 +1,8 @@
 package transaction
 
 import (
-	"example/campaign"
-	"example/user"
+	"example/module/campaign"
+	"example/module/user"
 	"time"
 )
 

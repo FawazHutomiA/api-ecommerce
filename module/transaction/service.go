@@ -2,8 +2,8 @@ package transaction
 
 import (
 	"errors"
-	"example/campaign"
-	"example/payment"
+	"example/module/campaign"
+	"example/module/payment"
 	"strconv"
 )
 

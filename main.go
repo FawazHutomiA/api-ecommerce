@@ -2,7 +2,7 @@ package main
 
 import (
 	"example/helper"
-	"example/router"
+	"example/module/router"
 	"fmt"
 	"log"
 

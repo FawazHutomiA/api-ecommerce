@@ -2,7 +2,7 @@ package campaign
 
 import (
 	"example/helper"
-	"example/user"
+	"example/module/user"
 	"fmt"
 	"net/http"
 	"strconv"
