@@ -1,9 +1,5 @@
 package input
 
-import (
-	userEntity "example/internal/entity"
-)
-
 type GetCampaignDetailInput struct {
 	ID int `uri:"id" binding:"required"`
 }
@@ -14,11 +10,11 @@ type CreateCampaignInput struct {
 	Description      string `json:"description" binding:"required"`
 	GoalAmount       int    `json:"goal_amount" binding:"required"`
 	Perks            string `json:"perks" binding:"required"`
-	User             userEntity.User
+	UserID           int
 }
 
 type CreateCampaignImageInput struct {
 	CampaignID int  `form:"campaign_id" binding:"required"`
 	IsPrimary  bool `form:"is_primary"`
-	User       userEntity.User
+	UserID     int
 }

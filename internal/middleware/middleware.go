@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"example/internal/helper"
-	"example/internal/service"
+	jwtValidate "example/internal/jwt"
 	"net/http"
 	"strings"
 
@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware(authService service.AuthService, userService service.UserService) gin.HandlerFunc {
+func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 
@@ -28,7 +28,7 @@ func AuthMiddleware(authService service.AuthService, userService service.UserSer
 		}
 
 		// validasi token sesuai atau tidak dengan secret key
-		token, err := authService.ValidateToken(tokenString)
+		token, err := jwtValidate.ValidateToken(tokenString)
 		if err != nil {
 			response := helper.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
@@ -43,16 +43,20 @@ func AuthMiddleware(authService service.AuthService, userService service.UserSer
 			return
 		}
 
-		userID := int(claim["user_id"].(float64))
-
-		// check user ada atau tidak ada
-		user, err := userService.GetUserByID(userID)
-		if err != nil {
+		// Safely cast to int
+		userIDFloat, ok := claim["user_id"].(float64)
+		if !ok {
 			response := helper.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
 			return
 		}
 
-		c.Set("currentUser", user)
+		userID := int(userIDFloat)
+
+		// Set userID in context
+		c.Set("userID", userID)
+
+		// Continue with the next handler
+		c.Next()
 	}
 }

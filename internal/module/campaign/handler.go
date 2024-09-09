@@ -3,7 +3,6 @@ package campaign
 import (
 	"example/internal/helper"
 
-	userEntity "example/internal/entity"
 	campaignInput "example/internal/input"
 	campaignService "example/internal/service"
 
@@ -70,20 +69,17 @@ func (h *CampaignHandler) CreateCampaign(c *gin.Context) {
 	err := c.ShouldBind(&input)
 	if err != nil {
 		errors := helper.FormatValidationError(err.(validator.ValidationErrors))
-
 		errorMessage := gin.H{"errors": errors}
-
 		response := helper.APIResponse("Failed to create campaign", http.StatusUnprocessableEntity, "error", errorMessage)
 		c.JSON(http.StatusUnprocessableEntity, response)
 		return
 	}
 
-	currentUser := c.MustGet("currentUser").(userEntity.User)
-
-	input.User = currentUser
+	getUserID, _ := c.Get("userID")
+	userID := getUserID.(int)
+	input.UserID = userID
 
 	newCampaign, err := h.service.CreateCampaign(input)
-
 	if err != nil {
 		response := helper.APIResponse("Failed to create campaign", http.StatusBadRequest, "error", nil)
 		c.JSON(http.StatusBadRequest, response)
@@ -92,14 +88,12 @@ func (h *CampaignHandler) CreateCampaign(c *gin.Context) {
 
 	response := helper.APIResponse("Success to create campaign", http.StatusOK, "success", FormatCampaign(newCampaign))
 	c.JSON(http.StatusOK, response)
-
 }
 
 func (h *CampaignHandler) UpdateCampaign(c *gin.Context) {
 	var inputID campaignInput.GetCampaignDetailInput
 
 	err := c.ShouldBindUri(&inputID)
-
 	if err != nil {
 		response := helper.APIResponse("Failed to update campaign", http.StatusBadRequest, "error", nil)
 		c.JSON(http.StatusBadRequest, response)
@@ -109,23 +103,19 @@ func (h *CampaignHandler) UpdateCampaign(c *gin.Context) {
 	var inputData campaignInput.CreateCampaignInput
 
 	err = c.ShouldBind(&inputData)
-
 	if err != nil {
 		errors := helper.FormatValidationError(err.(validator.ValidationErrors))
-
 		errorMessage := gin.H{"errors": errors}
-
 		response := helper.APIResponse("Failed to update campaign", http.StatusUnprocessableEntity, "error", errorMessage)
 		c.JSON(http.StatusUnprocessableEntity, response)
 		return
 	}
 
-	currentUser := c.MustGet("currentUser").(userEntity.User)
-
-	inputData.User = currentUser
+	getUserID, _ := c.Get("userID")
+	userID := getUserID.(int)
+	inputData.UserID = userID
 
 	updatedCampaign, err := h.service.UpdateCampaign(inputID, inputData)
-
 	if err != nil {
 		response := helper.APIResponse("Failed to update campaign", http.StatusBadRequest, "error", nil)
 		c.JSON(http.StatusBadRequest, response)
@@ -151,10 +141,9 @@ func (h *CampaignHandler) UploadImage(c *gin.Context) {
 		return
 	}
 
-	currentUser := c.MustGet("currentUser").(userEntity.User)
-
-	input.User = currentUser
-	userID := currentUser.ID
+	getUserID, _ := c.Get("userID")
+	userID := getUserID.(int)
+	input.UserID = userID
 
 	file, err := c.FormFile("file")
 	if err != nil {

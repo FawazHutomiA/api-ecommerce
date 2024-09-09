@@ -1,7 +1,6 @@
 package transaction
 
 import (
-	"example/internal/entity"
 	"example/internal/helper"
 
 	"example/internal/input"
@@ -32,10 +31,6 @@ func (h *TransactionHandler) GetCampaignTransactions(c *gin.Context) {
 		return
 	}
 
-	currentUser := c.MustGet("currentUser").(entity.User)
-
-	input.User = currentUser
-
 	transactions, err := h.service.GetTransactionsByCampaignID(input)
 
 	if err != nil {
@@ -49,9 +44,8 @@ func (h *TransactionHandler) GetCampaignTransactions(c *gin.Context) {
 }
 
 func (h *TransactionHandler) GetUserTransactions(c *gin.Context) {
-	currentUser := c.MustGet("currentUser").(entity.User)
-
-	userID := currentUser.ID
+	getUserID, _ := c.Get("userID")
+	userID := getUserID.(int)
 
 	transactions, err := h.service.GetTransactionsByUserID(userID)
 
@@ -63,7 +57,6 @@ func (h *TransactionHandler) GetUserTransactions(c *gin.Context) {
 
 	response := helper.APIResponse("List of user's transactions", http.StatusOK, "success", FormatUserTransactions(transactions))
 	c.JSON(http.StatusOK, response)
-
 }
 
 func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
@@ -80,10 +73,6 @@ func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, response)
 		return
 	}
-
-	currentUser := c.MustGet("currentUser").(entity.User)
-
-	input.User = currentUser
 
 	newTransaction, err := h.service.CreateTransaction(input)
 

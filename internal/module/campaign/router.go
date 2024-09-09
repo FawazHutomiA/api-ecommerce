@@ -10,18 +10,24 @@ import (
 )
 
 func SetupCampaignRoutes(api *gin.RouterGroup, db *gorm.DB) {
-	authService := service.AuthNewService()
-
-	userRepository := repository.UserNewRepository(db)
-	userService := service.UserNewService(userRepository)
-
+	// Initialize services and repositories
 	campaignRepository := repository.CampaignNewRepository(db)
 	campaignService := service.CampaignNewService(campaignRepository)
 	campaignHandler := NewCampaignHandler(campaignService)
 
-	api.GET("/campaigns", campaignHandler.GetCampaigns)
-	api.GET("/campaigns/:id", campaignHandler.GetCampaign)
-	api.POST("/campaigns", middleware.AuthMiddleware(authService, userService), campaignHandler.CreateCampaign)
-	api.PUT("/campaigns/:id", middleware.AuthMiddleware(authService, userService), campaignHandler.UpdateCampaign)
-	api.POST("/campaign-images", middleware.AuthMiddleware(authService, userService), campaignHandler.UploadImage)
+	// Public routes (accessible without authentication)
+	publicCampaignRoutes := api.Group("/campaigns")
+	{
+		publicCampaignRoutes.GET("", campaignHandler.GetCampaigns)    // List all campaigns
+		publicCampaignRoutes.GET("/:id", campaignHandler.GetCampaign) // Get a specific campaign by ID
+	}
+
+	// Authenticated routes (require JWT authentication)
+	authCampaignRoutes := api.Group("/campaigns")
+	authCampaignRoutes.Use(middleware.AuthMiddleware()) // Apply AuthMiddleware to all routes in this group
+	{
+		authCampaignRoutes.POST("", campaignHandler.CreateCampaign)     // Create a new campaign
+		authCampaignRoutes.PUT("/:id", campaignHandler.UpdateCampaign)  // Update an existing campaign
+		authCampaignRoutes.POST("/images", campaignHandler.UploadImage) // Upload campaign image
+	}
 }

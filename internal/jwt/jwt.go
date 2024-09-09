@@ -1,4 +1,4 @@
-package service
+package jwt
 
 import (
 	"errors"
@@ -7,21 +7,9 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-type AuthService interface {
-	GenerateToken(userID int) (string, error)
-	ValidateToken(token string) (*jwt.Token, error)
-}
-
-type jwtService struct {
-}
-
 var SECRET_KEY = []byte(os.Getenv("SECRET_KEY"))
 
-func AuthNewService() *jwtService {
-	return &jwtService{}
-}
-
-func (s *jwtService) GenerateToken(userID int) (string, error) {
+func GenerateToken(userID int) (string, error) {
 	claim := jwt.MapClaims{}
 	claim["user_id"] = userID
 
@@ -35,7 +23,7 @@ func (s *jwtService) GenerateToken(userID int) (string, error) {
 	return signedToken, nil
 }
 
-func (s *jwtService) ValidateToken(encodedToken string) (*jwt.Token, error) {
+func ValidateToken(encodedToken string) (*jwt.Token, error) {
 	// Parse token
 	token, err := jwt.Parse(encodedToken, func(token *jwt.Token) (interface{}, error) {
 		// Check token method

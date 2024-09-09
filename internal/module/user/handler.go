@@ -7,8 +7,8 @@ import (
 	"example/internal/helper"
 	"example/internal/service"
 
-	userEntity "example/internal/entity"
 	userInput "example/internal/input"
+	jwtValidate "example/internal/jwt"
 
 	"fmt"
 	"io"
@@ -23,11 +23,10 @@ import (
 
 type UserHandler struct {
 	userService service.UserService
-	authService service.AuthService
 }
 
-func NewUserHandler(userService service.UserService, authService service.AuthService) *UserHandler {
-	return &UserHandler{userService, authService}
+func NewUserHandler(userService service.UserService) *UserHandler {
+	return &UserHandler{userService}
 }
 
 var (
@@ -75,7 +74,7 @@ func (h *UserHandler) RegisterUser(c *gin.Context) {
 		return
 	}
 
-	token, err := h.authService.GenerateToken(newUser.ID)
+	token, err := jwtValidate.GenerateToken(newUser.ID)
 
 	if err != nil {
 		response := helper.APIResponse("Account failed to register", http.StatusBadRequest, "error", nil)
@@ -114,7 +113,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	token, err := h.authService.GenerateToken(loggedInUser.ID)
+	token, err := jwtValidate.GenerateToken(loggedInUser.ID)
 
 	if err != nil {
 		response := helper.APIResponse("Login failed", http.StatusBadRequest, "error", nil)
@@ -178,8 +177,9 @@ func (h *UserHandler) UploadAvatar(c *gin.Context) {
 		return
 	}
 
-	currentUser := c.MustGet("currentUser").(userEntity.User)
-	userID := currentUser.ID
+	getUserID, _ := c.Get("userID")
+	userID := getUserID.(int)
+
 	path := fmt.Sprintf("images/%d-%s", userID, file.Filename)
 
 	err = c.SaveUploadedFile(file, path)
@@ -209,9 +209,16 @@ func (h *UserHandler) UploadAvatar(c *gin.Context) {
 }
 
 func (h *UserHandler) GetUserByJWT(c *gin.Context) {
-	currentUser := c.MustGet("currentUser").(userEntity.User)
+	getUserID, _ := c.Get("userID")
+	userID := getUserID.(int)
+	user, err := h.userService.GetUserByID(userID)
+	if err != nil {
+		response := helper.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
+		c.AbortWithStatusJSON(http.StatusUnauthorized, response)
+		return
+	}
 
-	formatter := FormatUser(currentUser, "")
+	formatter := FormatUser(user, "")
 
 	response := helper.APIResponse("Successfuly get user data", http.StatusOK, "success", formatter)
 
@@ -229,7 +236,6 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 
 	response := helper.APIResponse("List of users", http.StatusOK, "success", FormatUsers(users))
 	c.JSON(http.StatusOK, response)
-
 }
 
 func (h *UserHandler) HandleLogin(c *gin.Context) {
@@ -284,7 +290,7 @@ func (h *UserHandler) HandleCallback(c *gin.Context) {
 		return
 	}
 
-	tokenLogin, err := h.authService.GenerateToken(userLogin.ID)
+	tokenLogin, err := jwtValidate.GenerateToken(userLogin.ID)
 
 	if err != nil {
 		response := helper.APIResponse("Login failed", http.StatusBadRequest, "error", nil)
@@ -297,5 +303,4 @@ func (h *UserHandler) HandleCallback(c *gin.Context) {
 	response := helper.APIResponse("Successfully logged in", http.StatusOK, "success", formatter)
 
 	c.JSON(http.StatusOK, response)
-
 }
