@@ -1,7 +1,7 @@
 package transaction
 
 import (
-	"example/internal/helper"
+	"example/pkg/helper"
 
 	"example/internal/input"
 	"example/internal/service"

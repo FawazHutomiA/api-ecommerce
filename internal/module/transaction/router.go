@@ -1,9 +1,9 @@
 package transaction
 
 import (
-	"example/internal/middleware"
 	"example/internal/repository"
 	"example/internal/service"
+	"example/pkg/middleware"
 
 	userRepository "example/internal/repository"
 

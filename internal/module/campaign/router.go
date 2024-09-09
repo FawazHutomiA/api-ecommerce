@@ -1,9 +1,9 @@
 package campaign
 
 import (
-	"example/internal/middleware"
 	"example/internal/repository"
 	"example/internal/service"
+	"example/pkg/middleware"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

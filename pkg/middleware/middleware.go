@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"example/internal/helper"
-	jwtValidate "example/internal/jwt"
+	"example/pkg/helper"
+	jwtValidate "example/pkg/jwt"
 	"net/http"
 	"strings"
 

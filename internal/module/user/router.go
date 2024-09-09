@@ -1,8 +1,8 @@
 package user
 
 import (
-	"example/internal/middleware"
 	"example/internal/service"
+	"example/pkg/middleware"
 
 	userRepository "example/internal/repository"
 

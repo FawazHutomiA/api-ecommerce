@@ -1,7 +1,7 @@
 package config
 
 import (
-	"example/internal/helper"
+	"example/pkg/helper"
 	"fmt"
 
 	"gorm.io/driver/postgres"

@@ -1,7 +1,7 @@
 package campaign
 
 import (
-	"example/internal/helper"
+	"example/pkg/helper"
 
 	campaignInput "example/internal/input"
 	campaignService "example/internal/service"

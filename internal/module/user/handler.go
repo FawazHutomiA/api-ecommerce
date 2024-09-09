@@ -4,11 +4,11 @@ import (
 	"context"
 	"encoding/json"
 
-	"example/internal/helper"
 	"example/internal/service"
+	"example/pkg/helper"
 
 	userInput "example/internal/input"
-	jwtValidate "example/internal/jwt"
+	jwtValidate "example/pkg/jwt"
 
 	"fmt"
 	"io"
