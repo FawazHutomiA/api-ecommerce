@@ -9,9 +9,10 @@ type UserFormatter struct {
 	Name       string `json:"name"`
 	Occupation string `json:"occupation"`
 	Email      string `json:"email"`
-	Token      string `json:"token"`
+	Role       string `json:"role"`
 	ImageURL   string `json:"image_url"`
 	IsGoogle   bool   `json:"is_google"`
+	Token      string `json:"token"`
 }
 
 type UserGetFormatter struct {
@@ -24,8 +25,8 @@ type UserGetFormatter struct {
 	IsGoogle   bool   `json:"is_google"`
 }
 
-func FormatUser(user userEntity.User, token string) UserGetFormatter {
-	formatter := UserGetFormatter{
+func FormatUser(user userEntity.User, token string) UserFormatter {
+	formatter := UserFormatter{
 		ID:         user.ID,
 		Name:       user.Name,
 		Occupation: user.Occupation,
@@ -33,6 +34,7 @@ func FormatUser(user userEntity.User, token string) UserGetFormatter {
 		Email:      user.Email,
 		ImageURL:   user.AvatarFileName,
 		IsGoogle:   user.IsGoogle,
+		Token:      token,
 	}
 
 	return formatter

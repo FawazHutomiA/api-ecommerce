@@ -1,6 +1,7 @@
 package router
 
 import (
+	"example/internal/module/auth"
 	"example/internal/module/campaign"
 	"example/internal/module/transaction"
 	"example/internal/module/user"
@@ -19,6 +20,7 @@ func Router(db *gorm.DB) {
 	api := router.Group("/api/v1")
 
 	// Initialize each module's routes
+	auth.SetupAuthRoutes(api, db)
 	user.SetupUserRoutes(api, db)
 	campaign.SetupCampaignRoutes(api, db)
 	transaction.SetupTransactionRoutes(api, db)
