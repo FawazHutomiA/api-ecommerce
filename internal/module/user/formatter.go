@@ -24,13 +24,13 @@ type UserGetFormatter struct {
 	IsGoogle   bool   `json:"is_google"`
 }
 
-func FormatUser(user userEntity.User, token string) UserFormatter {
-	formatter := UserFormatter{
+func FormatUser(user userEntity.User, token string) UserGetFormatter {
+	formatter := UserGetFormatter{
 		ID:         user.ID,
 		Name:       user.Name,
 		Occupation: user.Occupation,
+		Role:       user.Role,
 		Email:      user.Email,
-		Token:      token,
 		ImageURL:   user.AvatarFileName,
 		IsGoogle:   user.IsGoogle,
 	}

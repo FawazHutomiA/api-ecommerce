@@ -31,7 +31,7 @@ func SetupUserRoutes(api *gin.RouterGroup, db *gorm.DB) {
 	authUserRoutes.Use(middleware.AuthMiddleware()) // Apply AuthMiddleware to all routes in this group
 	{
 		authUserRoutes.POST("/avatars", userHandler.UploadAvatar) // Upload user avatar
-		authUserRoutes.GET("/user", userHandler.GetUserByJWT)     // Get user by JWT token
+		authUserRoutes.GET("/me", userHandler.GetUserByJWT)       // Get user by JWT token
 		authUserRoutes.GET("", userHandler.GetUsers)              // Get list of users
 	}
 }

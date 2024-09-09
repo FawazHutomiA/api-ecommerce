@@ -36,7 +36,7 @@ var (
 
 func init() {
 	googleOauthConfig = &oauth2.Config{
-		RedirectURL:  "http://localhost:8080/api/v1/callback",
+		RedirectURL:  "http://localhost:8080/api/v1/users/callback",
 		ClientID:     helper.GetENV("CLIENT_ID"),
 		ClientSecret: helper.GetENV("CLIENT_SECRET"),
 		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"},
