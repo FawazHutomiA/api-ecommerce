@@ -5,6 +5,8 @@ import (
 	"example/internal/repository"
 	"example/internal/service"
 
+	userRepository "example/internal/repository"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -12,10 +14,15 @@ import (
 func SetupTransactionRoutes(api *gin.RouterGroup, db *gorm.DB) {
 	// Initialize services and repositories
 	paymentService := service.PaymentNewService()
+
 	campaignRepository := repository.CampaignNewRepository(db)
+
+	userRepository := userRepository.UserNewRepository(db)
+	userService := service.UserNewService(userRepository)
+
 	transactionRepository := repository.TransactionNewRepository(db)
 	transactionService := service.TransactionNewService(transactionRepository, campaignRepository, paymentService)
-	transactionHandler := NewTransactionHandler(transactionService)
+	transactionHandler := NewTransactionHandler(transactionService, userService)
 
 	// Public routes (accessible without authentication)
 	publicTransactionRoutes := api.Group("/transactions")

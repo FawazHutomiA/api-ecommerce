@@ -3,8 +3,8 @@ package input
 import userEntity "example/internal/entity"
 
 type GetCampaignTransactionsInput struct {
-	ID   int `uri:"id" binding:"required"`
-	User userEntity.User
+	ID     int `uri:"id" binding:"required"`
+	UserID int
 }
 
 type CreateTransactionInput struct {

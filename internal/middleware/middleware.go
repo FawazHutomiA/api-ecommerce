@@ -50,7 +50,6 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
 			return
 		}
-
 		userID := int(userIDFloat)
 
 		// Set userID in context

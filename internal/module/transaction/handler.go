@@ -13,11 +13,12 @@ import (
 )
 
 type TransactionHandler struct {
-	service service.TransactionService
+	service     service.TransactionService
+	userService service.UserService
 }
 
-func NewTransactionHandler(service service.TransactionService) *TransactionHandler {
-	return &TransactionHandler{service}
+func NewTransactionHandler(service service.TransactionService, userService service.UserService) *TransactionHandler {
+	return &TransactionHandler{service, userService}
 }
 
 func (h *TransactionHandler) GetCampaignTransactions(c *gin.Context) {
@@ -31,8 +32,11 @@ func (h *TransactionHandler) GetCampaignTransactions(c *gin.Context) {
 		return
 	}
 
-	transactions, err := h.service.GetTransactionsByCampaignID(input)
+	getUserID, _ := c.Get("userID")
+	userID := getUserID.(int)
+	input.UserID = userID
 
+	transactions, err := h.service.GetTransactionsByCampaignID(input)
 	if err != nil {
 		response := helper.APIResponse("Failed to get campaign's transactions", http.StatusBadRequest, "error", nil)
 		c.JSON(http.StatusBadRequest, response)
@@ -63,7 +67,6 @@ func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 	var input input.CreateTransactionInput
 
 	err := c.ShouldBindJSON(&input)
-
 	if err != nil {
 		errors := helper.FormatValidationError(err.(validator.ValidationErrors))
 
@@ -74,8 +77,20 @@ func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 		return
 	}
 
-	newTransaction, err := h.service.CreateTransaction(input)
+	getUserID, _ := c.Get("userID")
+	userID := getUserID.(int)
 
+	user, err := h.userService.GetUserByID(userID)
+	if err != nil {
+		response := helper.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
+		c.AbortWithStatusJSON(http.StatusUnauthorized, response)
+		return
+	}
+
+	input.User.ID = userID
+	input.User.Email = user.Email
+
+	newTransaction, err := h.service.CreateTransaction(input)
 	if err != nil {
 		response := helper.APIResponse("Failed to create transaction", http.StatusBadRequest, "error", nil)
 		c.JSON(http.StatusBadRequest, response)
@@ -84,7 +99,6 @@ func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 
 	response := helper.APIResponse("Success to create transaction", http.StatusOK, "success", FormatTransaction(newTransaction))
 	c.JSON(http.StatusOK, response)
-
 }
 
 func (h *TransactionHandler) GetNotification(c *gin.Context) {
