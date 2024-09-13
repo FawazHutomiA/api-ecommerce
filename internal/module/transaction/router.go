@@ -1,48 +1,37 @@
 package transaction
 
 import (
-	"example/internal/repository"
-	"example/internal/service"
+	"example/internal/module/payment"
+	"example/internal/repository/postgresql/product"
+	"example/internal/repository/postgresql/transaction"
+	"example/internal/repository/postgresql/user"
+	"example/pkg/app"
 	"example/pkg/middleware"
 
-	userRepository "example/internal/repository"
-
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/go-chi/chi"
 )
 
-func SetupTransactionRoutes(api *gin.RouterGroup, db *gorm.DB) {
-	// Initialize services and repositories
-	paymentService := service.PaymentNewService()
+func SetupTransactionRoutes(r chi.Router, app app.AppConfig) {
+	// Initialize repositories and services
+	productRepository := product.NewProductRepository(app)
 
-	campaignRepository := repository.CampaignNewRepository(db)
+	userRepository := user.NewUserRepository(app)
 
-	userRepository := userRepository.UserNewRepository(db)
-	userService := service.UserNewService(userRepository)
+	paymentService := payment.PaymentNewService()
 
-	transactionRepository := repository.TransactionNewRepository(db)
-	transactionService := service.TransactionNewService(transactionRepository, campaignRepository, paymentService)
-	transactionHandler := NewTransactionHandler(transactionService, userService)
+	transactionRepository := transaction.NewTransactionRepository(app)
+	transactionService := NewTransactionService(app, transactionRepository, productRepository, userRepository, paymentService)
+	transactionHandler := NewTransactionHandler(app, transactionService)
 
-	// Public routes (accessible without authentication)
-	publicTransactionRoutes := api.Group("/transactions")
-	{
-		// Notification endpoint does not require authentication
-		publicTransactionRoutes.POST("/notification", transactionHandler.GetNotification)
-	}
+	r.Post("/transactions/notification", transactionHandler.GetNotification)
 
-	// Authenticated routes (require JWT authentication)
-	authTransactionRoutes := api.Group("/transactions")
-	authTransactionRoutes.Use(middleware.AuthMiddleware()) // Apply AuthMiddleware to all routes in this group
-	{
-		authTransactionRoutes.GET("", transactionHandler.GetUserTransactions) // Get user transactions
-		authTransactionRoutes.POST("", transactionHandler.CreateTransaction)  // Create a new transaction
-	}
-
-	// Authenticated routes for campaign-specific transactions
-	authCampaignTransactionRoutes := api.Group("/campaigns/:id/transactions")
-	authCampaignTransactionRoutes.Use(middleware.AuthMiddleware()) // Apply AuthMiddleware to these routes
-	{
-		authCampaignTransactionRoutes.GET("", transactionHandler.GetCampaignTransactions) // Get transactions for a specific campaign
-	}
+	r.With(middleware.AuthMiddleware).Route("/transactions", func(r chi.Router) {
+		r.Get("/", transactionHandler.ListPaginate)
+		r.Get("/{id:[a-fA-F0-9-]{36}}", transactionHandler.Detail)
+		r.Get("/product/{id:[a-fA-F0-9-]{36}}", transactionHandler.DetailByProductID)
+		r.Get("/user/{id:[a-fA-F0-9-]{36}}", transactionHandler.DetailByUserID)
+		r.Post("/", transactionHandler.Create)
+		r.Put("/{id:[a-fA-F0-9-]{36}}", transactionHandler.Update)
+		r.Delete("/{id:[a-fA-F0-9-]{36}}", transactionHandler.Delete)
+	})
 }

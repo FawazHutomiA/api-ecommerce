@@ -3,32 +3,25 @@ package auth
 import (
 	"context"
 	"encoding/json"
-
-	"example/internal/module/user"
-	"example/internal/service"
+	"example/pkg/app"
 	"example/pkg/helper"
-
-	userInput "example/internal/input"
-	jwtValidate "example/pkg/jwt"
-
-	"fmt"
+	"example/pkg/response"
+	"example/pkg/validator"
 	"io"
 	"log"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
 
 type AuthHandler struct {
-	authService service.AuthService
-	userService service.UserService
+	App         app.AppConfig
+	AuthService AuthService
 }
 
-func NewAuthHandler(authService service.AuthService, userService service.UserService) *AuthHandler {
-	return &AuthHandler{authService, userService}
+func NewAuthHandler(app app.AppConfig, authService AuthService) *AuthHandler {
+	return &AuthHandler{App: app, AuthService: authService}
 }
 
 var (
@@ -46,191 +39,109 @@ func init() {
 	}
 }
 
-func (h *AuthHandler) RegisterUser(c *gin.Context) {
-	var input userInput.RegisterUserInput
+func (handler *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
+	// Init
+	var req AuthRegisterRequest
+	var resp response.Response
+	ctx := r.Context()
 
-	err := c.ShouldBindJSON(&input)
-	if err != nil {
-		errors := helper.FormatValidationError(err.(validator.ValidationErrors))
-
-		errorMessage := gin.H{"errors": errors}
-
-		response := helper.APIResponse("Account failed to register", http.StatusUnprocessableEntity, "error", errorMessage)
-		c.JSON(http.StatusUnprocessableEntity, response)
+	resp, errV := validator.ValidateRequest(r, &req)
+	if errV != nil {
+		resp.JSON(w)
 		return
 	}
 
-	checkEmailInput := userInput.CheckEmailInput{Email: input.Email}
-
-	isEmailAvailable, _ := h.authService.CheckEmail(checkEmailInput)
-	if input.Email == isEmailAvailable.Email {
-		response := helper.APIResponse("Email is already taken.", http.StatusBadRequest, "error", nil)
-		c.JSON(http.StatusBadRequest, response)
+	service, err := handler.AuthService.Register(ctx, req)
+	if err.Errors != nil {
+		handler.App.Logger.Error(err)
+		resp = response.Error(err.Status, err.Message, err.Errors)
+		resp.JSON(w)
 		return
 	}
 
-	newUser, err := h.authService.RegisterUser(input)
-	if err != nil {
-		response := helper.APIResponse("Account failed to register", http.StatusBadRequest, "error", nil)
-		c.JSON(http.StatusBadRequest, response)
-		return
-	}
-
-	token, err := jwtValidate.GenerateToken(newUser.ID)
-
-	if err != nil {
-		response := helper.APIResponse("Account failed to register", http.StatusBadRequest, "error", nil)
-		c.JSON(http.StatusBadRequest, response)
-		return
-	}
-
-	formatter := user.FormatUser(newUser, token)
-
-	response := helper.APIResponse("Account has been registered", http.StatusOK, "success", formatter)
-
-	c.JSON(http.StatusOK, response)
+	resp = response.Success(response.StatusOK, "Register Success", service)
+	resp.JSON(w)
 }
 
-func (h *AuthHandler) Login(c *gin.Context) {
-	var input userInput.LoginInput
+func (handler *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+	// Init
+	var req AuthLoginRequest
+	var resp response.Response
+	ctx := r.Context()
 
-	err := c.ShouldBindJSON(&input)
-	if err != nil {
-		errors := helper.FormatValidationError(err.(validator.ValidationErrors))
-
-		errorMessage := gin.H{"errors": errors}
-
-		response := helper.APIResponse("Login failed", http.StatusUnprocessableEntity, "error", errorMessage)
-		c.JSON(http.StatusUnprocessableEntity, response)
+	resp, errV := validator.ValidateRequest(r, &req)
+	if errV != nil {
+		resp.JSON(w)
 		return
 	}
 
-	loggedInUser, err := h.authService.Login(input)
-
-	if err != nil {
-		errorMessage := gin.H{"errors": err.Error()}
-
-		response := helper.APIResponse("Login failed", http.StatusUnprocessableEntity, "error", errorMessage)
-		c.JSON(http.StatusUnprocessableEntity, response)
+	service, err := handler.AuthService.Login(ctx, req)
+	if err.Errors != nil {
+		handler.App.Logger.Error(err)
+		resp = response.Error(err.Status, err.Message, err.Errors)
+		resp.JSON(w)
 		return
 	}
 
-	token, err := jwtValidate.GenerateToken(loggedInUser.ID)
-
-	if err != nil {
-		response := helper.APIResponse("Login failed", http.StatusBadRequest, "error", nil)
-		c.JSON(http.StatusBadRequest, response)
-		return
-	}
-
-	formatter := user.FormatUser(loggedInUser, token)
-
-	response := helper.APIResponse("Successfully logged in", http.StatusOK, "success", formatter)
-
-	c.JSON(http.StatusOK, response)
+	resp = response.Success(response.StatusOK, "Login Success", service)
+	resp.JSON(w)
 }
 
-func (h *AuthHandler) CheckEmailAvailability(c *gin.Context) {
-	var input userInput.CheckEmailInput
-
-	err := c.ShouldBindJSON(&input)
-	if err != nil {
-		errors := helper.FormatValidationError(err.(validator.ValidationErrors))
-
-		errorMessage := gin.H{"errors": errors}
-
-		response := helper.APIResponse("Email checking failed", http.StatusUnprocessableEntity, "error", errorMessage)
-		c.JSON(http.StatusUnprocessableEntity, response)
-		return
-	}
-
-	isEmailAvailable, err := h.authService.IsEmailAvailable(input)
-	if err != nil {
-		errorMessage := gin.H{"errors": "Server error"}
-
-		response := helper.APIResponse("Email checking failed", http.StatusUnprocessableEntity, "error", errorMessage)
-		c.JSON(http.StatusUnprocessableEntity, response)
-		return
-	}
-
-	data := gin.H{
-		"is_available": isEmailAvailable,
-	}
-
-	metaMessage := "Email has been registered"
-
-	if isEmailAvailable {
-		metaMessage = "Email is available"
-	}
-
-	response := helper.APIResponse(metaMessage, http.StatusOK, "success", data)
-
-	c.JSON(http.StatusOK, response)
-}
-
-func (h *AuthHandler) HandleLogin(c *gin.Context) {
+func (handler *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	url := googleOauthConfig.AuthCodeURL(randomState)
-	c.Redirect(http.StatusTemporaryRedirect, url)
+	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 	log.Println(url, "urllll")
 }
 
-func (h *AuthHandler) HandleCallback(c *gin.Context) {
-	state := c.Query("state")
+func (handler *AuthHandler) HandleCallback(w http.ResponseWriter, r *http.Request) {
+	var resp response.Response
+	ctx := r.Context()
+	// Init
+	state := r.URL.Query().Get("state")
 	if state != randomState {
-		fmt.Println("State is not valid")
-		c.Redirect(http.StatusTemporaryRedirect, "/")
+		handler.App.Logger.Error("State is not valid")
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
 
-	code := c.Query("code")
+	code := r.URL.Query().Get("code")
 	token, err := googleOauthConfig.Exchange(context.Background(), code)
 	if err != nil {
-		fmt.Println("could not get token \n", err.Error())
-		c.Redirect(http.StatusTemporaryRedirect, "/")
+		handler.App.Logger.Error("Could not get token", err)
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
 
-	resp, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
+	responseGoogle, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
 	if err != nil {
-		fmt.Println("could not create request \n", err.Error())
-		c.Redirect(http.StatusTemporaryRedirect, "/")
+		handler.App.Logger.Error("Could not create request", err)
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
-	defer resp.Body.Close()
+	defer responseGoogle.Body.Close()
 
-	content, err := io.ReadAll(resp.Body)
+	content, err := io.ReadAll(responseGoogle.Body)
 	if err != nil {
-		fmt.Println("could not read response body \n", err.Error())
-		c.Redirect(http.StatusTemporaryRedirect, "/")
+		handler.App.Logger.Error("Could not read response body", err)
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
 
-	var userInfo userInput.GoogleUser
+	var userInfo GoogleUser
 	if err := json.Unmarshal(content, &userInfo); err != nil {
-		fmt.Println("could not unmarshal JSON \n", err.Error())
-		c.Redirect(http.StatusTemporaryRedirect, "/")
+		handler.App.Logger.Error("Could not unmarshal JSON", err)
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
 
-	userLogin, err := h.userService.GetOrSaveUser(userInfo)
-
-	if err != nil {
-		response := helper.APIResponse("Login failed", http.StatusBadRequest, "error", nil)
-		c.JSON(http.StatusBadRequest, response)
+	userLogin, errV := handler.AuthService.GetOrSaveUser(ctx, userInfo)
+	if errV.Errors != nil {
+		handler.App.Logger.Error(err)
+		resp = response.Error(errV.Status, errV.Message, errV.Errors)
+		resp.JSON(w)
 		return
 	}
 
-	tokenLogin, err := jwtValidate.GenerateToken(userLogin.ID)
-
-	if err != nil {
-		response := helper.APIResponse("Login failed", http.StatusBadRequest, "error", nil)
-		c.JSON(http.StatusBadRequest, response)
-		return
-	}
-
-	formatter := user.FormatUser(userLogin, tokenLogin)
-
-	response := helper.APIResponse("Successfully logged in", http.StatusOK, "success", formatter)
-
-	c.JSON(http.StatusOK, response)
+	resp = response.Success(response.StatusOK, "Login Success", userLogin)
+	resp.JSON(w)
 }

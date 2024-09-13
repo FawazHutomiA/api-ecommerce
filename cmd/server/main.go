@@ -3,14 +3,24 @@ package main
 import (
 	"example/config"
 	"example/internal/router"
-	"log"
+	"example/pkg/app"
+	"example/pkg/log"
 )
 
 func main() {
-	db, err := config.InitDB()
+	logger := log.New()
+
+	db, err := config.InitDB() // Initialize the database using sqlx
 	if err != nil {
-		log.Fatal(err.Error())
+		logger.Error(err)
+		panic(err)
 	}
 
-	router.Router(db)
+	// App Init
+	appConfig := app.AppConfig{
+		Db:     db,
+		Logger: logger,
+	}
+
+	router.Router(appConfig)
 }

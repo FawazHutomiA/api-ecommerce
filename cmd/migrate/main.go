@@ -46,25 +46,20 @@ func main() {
 
 	log.Println("Start migration...")
 
-	// Inisialisasi koneksi database menggunakan fungsi dari package config
-	appDb, err := config.InitDB()
+	// Initialize database connection using sqlx
+	db, err := config.InitDB()
 	if err != nil {
-		log.Fatalf("failed to connect database: %v", err)
+		log.Fatalf("failed to connect to the database: %v", err)
 	}
 
-	// Ambil objek sql.DB dari instance GORM untuk digunakan dengan goose
-	sqlDB, err := appDb.DB()
-	if err != nil {
-		log.Fatalf("failed to get sql.DB from GORM: %v", err)
-	}
-
-	defer sqlDB.Close()
+	defer db.Close() // Close connection when done
 
 	if err := goose.SetDialect(dialect); err != nil {
 		log.Fatal(err)
 	}
 
-	if err := goose.Run(command, sqlDB, *dir, args[1:]...); err != nil {
+	// Run the migration command
+	if err := goose.Run(command, db.DB, *dir, args[1:]...); err != nil {
 		log.Fatalf("migrate run: %v", err)
 	}
 }

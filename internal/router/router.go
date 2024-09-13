@@ -2,28 +2,20 @@ package router
 
 import (
 	"example/internal/module/auth"
-	"example/internal/module/campaign"
+	"example/internal/module/product"
 	"example/internal/module/transaction"
 	"example/internal/module/user"
+	"example/pkg/app"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/go-chi/chi"
 )
 
-func Router(db *gorm.DB) {
-	router := gin.Default()
-	router.SetTrustedProxies([]string{"127.0.0.1"})
-	router.Use(cors.Default())
-	router.Static("/images", "./images")
-
-	api := router.Group("/api/v1")
-
-	// Initialize each module's routes
-	auth.SetupAuthRoutes(api, db)
-	user.SetupUserRoutes(api, db)
-	campaign.SetupCampaignRoutes(api, db)
-	transaction.SetupTransactionRoutes(api, db)
-
-	router.Run(":8080")
+func SetupRoutes(r *chi.Mux, app app.AppConfig) {
+	// API V1
+	r.Route("/api/v1", func(r chi.Router) {
+		user.SetupUserRoutes(r, app)
+		auth.SetupAuthRoutes(r, app)
+		product.SetupProductRoutes(r, app)
+		transaction.SetupTransactionRoutes(r, app)
+	})
 }

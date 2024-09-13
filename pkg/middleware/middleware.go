@@ -1,61 +1,45 @@
 package middleware
 
 import (
-	"example/pkg/helper"
+	"context"
+	"encoding/json"
+	"example/pkg/exception"
 	jwtValidate "example/pkg/jwt"
+	"example/pkg/response"
 	"net/http"
 	"strings"
-
-	"github.com/dgrijalva/jwt-go"
-	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
+func AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authorization := r.Header.Get("authorization")
 
-		if !strings.Contains(authHeader, "Bearer") {
-			response := helper.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
-			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
-			return
-		}
+		token := strings.TrimSpace(strings.Replace(authorization, "Bearer", "", 1))
 
-		tokenString := ""
-
-		arrayToken := strings.Split(authHeader, " ")
-		if len(arrayToken) == 2 {
-			tokenString = arrayToken[1]
-		}
-
-		// validasi token sesuai atau tidak dengan secret key
-		token, err := jwtValidate.ValidateToken(tokenString)
+		tokenValidate, err := jwtValidate.ValidateToken(token)
 		if err != nil {
-			response := helper.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
-			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
+			resp := response.Error(response.StatusForbiddend, "Unauthorized", exception.ErrUnauthorized)
+			resp.JSON(w)
 			return
 		}
 
-		// validasi data tidak oke atau token tidak valid
-		claim, ok := token.Claims.(jwt.MapClaims)
-		if !ok || !token.Valid {
-			response := helper.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
-			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
+		// Extract claims
+		var claims Claims
+		claimsBytes, err := json.Marshal(tokenValidate.Claims)
+		if err != nil {
+			resp := response.Error(response.StatusForbiddend, "Unauthorized", exception.ErrUnauthorized)
+			resp.JSON(w)
 			return
 		}
+		json.Unmarshal(claimsBytes, &claims)
 
-		// Safely cast to int
-		userIDFloat, ok := claim["user_id"].(float64)
-		if !ok {
-			response := helper.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
-			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
-			return
-		}
-		userID := int(userIDFloat)
+		userID := claims.Data.UserID
+		role := claims.Data.Role
 
-		// Set userID in context
-		c.Set("userID", userID)
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, "userID", userID)
+		ctx = context.WithValue(ctx, "role", role)
 
-		// Continue with the next handler
-		c.Next()
-	}
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

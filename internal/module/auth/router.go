@@ -1,25 +1,21 @@
 package auth
 
 import (
-	"example/internal/service"
+	"example/internal/repository/postgresql/user"
+	"example/pkg/app"
 
-	userRepository "example/internal/repository"
-
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/go-chi/chi"
 )
 
-func SetupAuthRoutes(api *gin.RouterGroup, db *gorm.DB) {
+func SetupAuthRoutes(r chi.Router, app app.AppConfig) {
 	// Initialize repositories and services
-	userRepository := userRepository.UserNewRepository(db)
-	userService := service.UserNewService(userRepository)
+	userRepository := user.NewUserRepository(app)
 
-	authService := service.AuthNewService(userRepository)
-	authHandler := NewAuthHandler(authService, userService)
+	authService := NewAuthService(app, userRepository)
+	authHandler := NewAuthHandler(app, authService)
 
-	api.POST("/register", authHandler.RegisterUser)                 // Register user
-	api.POST("/sessions", authHandler.Login)                        // User login
-	api.POST("/email_checkers", authHandler.CheckEmailAvailability) // Check email availability
-	api.POST("/login", authHandler.HandleLogin)                     // OAuth2 login
-	api.GET("/callback", authHandler.HandleCallback)
+	r.Post("/register", authHandler.Register)
+	r.Post("/session", authHandler.Login)
+	r.Post("/login", authHandler.HandleLogin) // OAuth2 login
+	r.Get("/callback", authHandler.HandleCallback)
 }

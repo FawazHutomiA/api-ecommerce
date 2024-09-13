@@ -1,124 +1,234 @@
 package transaction
 
 import (
+	"example/pkg/app"
+	"example/pkg/constant"
 	"example/pkg/helper"
-
-	"example/internal/input"
-	"example/internal/service"
-
+	"example/pkg/response"
+	"example/pkg/validator"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
+	"github.com/go-chi/chi"
+	"github.com/google/uuid"
 )
 
 type TransactionHandler struct {
-	service     service.TransactionService
-	userService service.UserService
+	App                app.AppConfig
+	TransactionService TransactionService
 }
 
-func NewTransactionHandler(service service.TransactionService, userService service.UserService) *TransactionHandler {
-	return &TransactionHandler{service, userService}
+func NewTransactionHandler(app app.AppConfig, transactionService TransactionService) *TransactionHandler {
+	return &TransactionHandler{App: app, TransactionService: transactionService}
 }
 
-func (h *TransactionHandler) GetCampaignTransactions(c *gin.Context) {
-	var input input.GetCampaignTransactionsInput
+func (handler *TransactionHandler) ListPaginate(w http.ResponseWriter, r *http.Request) {
+	// Init
+	var resp response.Response
+	ctx := r.Context()
 
-	err := c.ShouldBindUri(&input)
+	param := helper.PaginationParams{}
+	param = param.GetPaginateParam(r)
 
-	if err != nil {
-		response := helper.APIResponse("Failed to get campaign's transactions", http.StatusBadRequest, "error", nil)
-		c.JSON(http.StatusBadRequest, response)
+	service, err := handler.TransactionService.ListPaginate(ctx, param)
+	if err.Errors != nil {
+		handler.App.Logger.Error(err)
+		resp = response.Error(err.Status, err.Message, err.Errors)
+		resp.JSON(w)
 		return
 	}
 
-	getUserID, _ := c.Get("userID")
-	userID := getUserID.(int)
-	input.UserID = userID
-
-	transactions, err := h.service.GetTransactionsByCampaignID(input)
-	if err != nil {
-		response := helper.APIResponse("Failed to get campaign's transactions", http.StatusBadRequest, "error", nil)
-		c.JSON(http.StatusBadRequest, response)
-		return
-	}
-
-	response := helper.APIResponse("List of campaign's transactions", http.StatusOK, "success", FormatCampaignTransactions(transactions))
-	c.JSON(http.StatusOK, response)
+	resp = response.Success(response.StatusOK, "Success", service)
+	resp.JSON(w)
 }
 
-func (h *TransactionHandler) GetUserTransactions(c *gin.Context) {
-	getUserID, _ := c.Get("userID")
-	userID := getUserID.(int)
+func (handler *TransactionHandler) Detail(w http.ResponseWriter, r *http.Request) {
+	// Init
+	var resp response.Response
+	ctx := r.Context()
 
-	transactions, err := h.service.GetTransactionsByUserID(userID)
+	idStr := chi.URLParam(r, "id")
 
-	if err != nil {
-		response := helper.APIResponse("Failed to get user's transactions", http.StatusBadRequest, "error", nil)
-		c.JSON(http.StatusBadRequest, response)
+	id, errs := uuid.Parse(idStr)
+	if errs != nil {
+		handler.App.Logger.Error(errs)
+		resp = response.Error(response.StatusBadRequest, constant.StatusBadRequest, errs)
+		resp.JSON(w)
 		return
 	}
 
-	response := helper.APIResponse("List of user's transactions", http.StatusOK, "success", FormatUserTransactions(transactions))
-	c.JSON(http.StatusOK, response)
+	service, err := handler.TransactionService.Detail(ctx, id)
+	if err.Errors != nil {
+		handler.App.Logger.Error(err)
+		resp = response.Error(err.Status, err.Message, err.Errors)
+		resp.JSON(w)
+		return
+	}
+
+	resp = response.Success(response.StatusOK, "Success", service)
+	resp.JSON(w)
 }
 
-func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
-	var input input.CreateTransactionInput
+func (handler *TransactionHandler) DetailByProductID(w http.ResponseWriter, r *http.Request) {
+	// Init
+	var resp response.Response
+	ctx := r.Context()
 
-	err := c.ShouldBindJSON(&input)
-	if err != nil {
-		errors := helper.FormatValidationError(err.(validator.ValidationErrors))
+	productIDStr := chi.URLParam(r, "product_id")
 
-		errorMessage := gin.H{"errors": errors}
-
-		response := helper.APIResponse("Failed to create transaction", http.StatusUnprocessableEntity, "error", errorMessage)
-		c.JSON(http.StatusUnprocessableEntity, response)
+	id, errs := uuid.Parse(productIDStr)
+	if errs != nil {
+		handler.App.Logger.Error(errs)
+		resp = response.Error(response.StatusBadRequest, constant.StatusBadRequest, errs)
+		resp.JSON(w)
 		return
 	}
 
-	getUserID, _ := c.Get("userID")
-	userID := getUserID.(int)
-
-	user, err := h.userService.GetUserByID(userID)
-	if err != nil {
-		response := helper.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
-		c.AbortWithStatusJSON(http.StatusUnauthorized, response)
+	service, err := handler.TransactionService.DetailByProductID(ctx, id)
+	if err.Errors != nil {
+		handler.App.Logger.Error(err)
+		resp = response.Error(err.Status, err.Message, err.Errors)
+		resp.JSON(w)
 		return
 	}
 
-	input.User.ID = userID
-	input.User.Email = user.Email
-
-	newTransaction, err := h.service.CreateTransaction(input)
-	if err != nil {
-		response := helper.APIResponse("Failed to create transaction", http.StatusBadRequest, "error", nil)
-		c.JSON(http.StatusBadRequest, response)
-		return
-	}
-
-	response := helper.APIResponse("Success to create transaction", http.StatusOK, "success", FormatTransaction(newTransaction))
-	c.JSON(http.StatusOK, response)
+	resp = response.Success(response.StatusOK, "Success", service)
+	resp.JSON(w)
 }
 
-func (h *TransactionHandler) GetNotification(c *gin.Context) {
-	var input input.TransactionNotificationInput
+func (handler *TransactionHandler) DetailByUserID(w http.ResponseWriter, r *http.Request) {
+	// Init
+	var resp response.Response
+	ctx := r.Context()
 
-	err := c.ShouldBindJSON(&input)
+	userIDStr := chi.URLParam(r, "user_id")
 
-	if err != nil {
-		response := helper.APIResponse("Failed to process notification", http.StatusBadRequest, "error", nil)
-		c.JSON(http.StatusBadRequest, response)
+	id, errs := uuid.Parse(userIDStr)
+	if errs != nil {
+		handler.App.Logger.Error(errs)
+		resp = response.Error(response.StatusBadRequest, constant.StatusBadRequest, errs)
+		resp.JSON(w)
 		return
 	}
 
-	err = h.service.ProcessPayment(input)
-
-	if err != nil {
-		response := helper.APIResponse("Failed to process notification", http.StatusBadRequest, "error", nil)
-		c.JSON(http.StatusBadRequest, response)
+	service, err := handler.TransactionService.DetailByUserID(ctx, id)
+	if err.Errors != nil {
+		handler.App.Logger.Error(err)
+		resp = response.Error(err.Status, err.Message, err.Errors)
+		resp.JSON(w)
 		return
 	}
 
-	c.JSON(http.StatusOK, input)
+	resp = response.Success(response.StatusOK, "Success", service)
+	resp.JSON(w)
+}
+
+func (handler *TransactionHandler) Create(w http.ResponseWriter, r *http.Request) {
+	// Init
+	var req TransactionCreateRequest
+	var resp response.Response
+	ctx := r.Context()
+
+	userID := ctx.Value("userID").(uuid.UUID)
+
+	resp, errV := validator.ValidateRequest(r, &req)
+	if errV != nil {
+		resp.JSON(w)
+		return
+	}
+
+	service, err := handler.TransactionService.Create(ctx, req, userID)
+	if err.Errors != nil {
+		handler.App.Logger.Error(err)
+		resp = response.Error(err.Status, err.Message, err.Errors)
+		resp.JSON(w)
+		return
+	}
+
+	resp = response.Success(response.StatusOK, "Success", service)
+	resp.JSON(w)
+}
+
+func (handler *TransactionHandler) Update(w http.ResponseWriter, r *http.Request) {
+	// Init
+	var req TransactionUpdateRequest
+	var resp response.Response
+	ctx := r.Context()
+
+	idStr := chi.URLParam(r, "id")
+
+	id, errs := uuid.Parse(idStr)
+	if errs != nil {
+		handler.App.Logger.Error(errs)
+		resp = response.Error(response.StatusBadRequest, constant.StatusBadRequest, errs)
+		resp.JSON(w)
+		return
+	}
+
+	resp, errV := validator.ValidateRequest(r, &req)
+	if errV != nil {
+		resp.JSON(w)
+		return
+	}
+
+	service, err := handler.TransactionService.Update(ctx, id, req)
+	if err.Errors != nil {
+		handler.App.Logger.Error(err)
+		resp = response.Error(err.Status, err.Message, err.Errors)
+		resp.JSON(w)
+		return
+	}
+
+	resp = response.Success(response.StatusOK, "Success", service)
+	resp.JSON(w)
+}
+
+func (handler *TransactionHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	// Init
+	var resp response.Response
+	ctx := r.Context()
+
+	idStr := chi.URLParam(r, "id")
+
+	id, errs := uuid.Parse(idStr)
+	if errs != nil {
+		handler.App.Logger.Error(errs)
+		resp = response.Error(response.StatusBadRequest, constant.StatusBadRequest, errs)
+		resp.JSON(w)
+		return
+	}
+
+	service, err := handler.TransactionService.Delete(ctx, id)
+	if err.Errors != nil {
+		handler.App.Logger.Error(errs)
+		resp = response.Error(err.Status, err.Message, err.Errors)
+		resp.JSON(w)
+		return
+	}
+
+	resp = response.Success(response.StatusOK, "Success", service)
+	resp.JSON(w)
+}
+
+func (handler *TransactionHandler) GetNotification(w http.ResponseWriter, r *http.Request) {
+	// Init
+	var req TransactionNotificationInput
+	var resp response.Response
+	ctx := r.Context()
+
+	resp, errV := validator.ValidateRequest(r, &req)
+	if errV != nil {
+		resp.JSON(w)
+		return
+	}
+
+	payment, err := handler.TransactionService.ProcessPayment(ctx, req)
+	if err.Errors != nil {
+		handler.App.Logger.Error(err)
+		resp = response.Error(err.Status, err.Message, err.Errors)
+		resp.JSON(w)
+		return
+	}
+
+	resp = response.Success(response.StatusOK, "Success", payment)
+	resp.JSON(w)
 }
