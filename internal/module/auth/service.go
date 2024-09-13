@@ -9,11 +9,13 @@ import (
 	"example/pkg/app"
 	"example/pkg/email"
 	"example/pkg/exception"
+	"example/pkg/helper"
 	"example/pkg/jwt"
 	jwtValidate "example/pkg/jwt"
 	"example/pkg/middleware"
 	"example/pkg/response"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -91,8 +93,37 @@ func (uc *authService) Register(ctx context.Context, params AuthRegisterRequest)
 	}
 
 	// Send verification email
-	verificationLink := fmt.Sprintf("http://localhost:8080/api/v1/verify?token=%s", jwtToken.Token)
-	err = email.SendVerificationEmailSMTP(params.Email, verificationLink)
+	// verificationLink := fmt.Sprintf("http://localhost:8080/api/v1/verify?token=%s", jwtToken.Token)
+	// err = email.SendVerificationEmailSMTP(params.Email, verificationLink)
+	// if err != nil {
+	// 	return resp, exception.Error{
+	// 		Status:  response.StatusInternalServerError,
+	// 		Message: "Failed to send verification email",
+	// 		Errors:  exception.ErrInternalServer,
+	// 	}
+	// }
+
+	logo := "https://img.freepik.com/free-vector/friends-logo-template_23-2149505594.jpg?w=740&t=st=1726542372~exp=1726542972~hmac=4478e2452e0c34d0dbfd075f12ba8ef05436cb5084576e0780ce0951cfd81ac8"
+	link := fmt.Sprintf("http://localhost:8080/api/v1/verify?token=%s", jwtToken.Token)
+
+	// Set Body HTML with Values
+	bodyHTML := strings.Replace(helper.REGISTER_USER_EMAIL_HTML, "{example_main_logo}", logo, -1)
+	bodyHTML = strings.Replace(bodyHTML, "{user_full_name}", params.Name, -1)
+	bodyHTML = strings.Replace(bodyHTML, "{$1}", link, 1)
+
+	mailConfig := email.MailgunConfig{
+		Domain: helper.GetENV("DOMAIN"),
+		ApiKey: helper.GetENV("API_KEY"),
+	}
+
+	data := email.MailgunData{
+		Sender:     helper.GetENV("SENDER"),
+		Subject:    fmt.Sprintf("Selamat Bergabung di %v!", "Example Web"),
+		BodyHTML:   bodyHTML,
+		Recipients: []string{params.Email},
+	}
+
+	_, err = email.SendMailgunEmail(mailConfig, data)
 	if err != nil {
 		return resp, exception.Error{
 			Status:  response.StatusInternalServerError,
