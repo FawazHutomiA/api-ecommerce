@@ -13,12 +13,12 @@ import (
 )
 
 type ProductHandler struct {
-	App     app.AppConfig
-	Usecase ProductService
+	App            app.AppConfig
+	ProductService ProductService
 }
 
-func NewProductHandler(app app.AppConfig, usecase ProductService) *ProductHandler {
-	return &ProductHandler{App: app, Usecase: usecase}
+func NewProductHandler(app app.AppConfig, productService ProductService) *ProductHandler {
+	return &ProductHandler{App: app, ProductService: productService}
 }
 
 func (handler *ProductHandler) ListPaginate(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +29,7 @@ func (handler *ProductHandler) ListPaginate(w http.ResponseWriter, r *http.Reque
 	param := helper.PaginationParams{}
 	param = param.GetPaginateParam(r)
 
-	service, err := handler.Usecase.ListPaginate(ctx, param)
+	service, err := handler.ProductService.ListPaginate(ctx, param)
 	if err.Errors != nil {
 		handler.App.Logger.Error(err)
 		resp = response.Error(err.Status, err.Message, err.Errors)
@@ -48,7 +48,7 @@ func (handler *ProductHandler) DetailBySlug(w http.ResponseWriter, r *http.Reque
 
 	slug := chi.URLParam(r, "slug")
 
-	service, err := handler.Usecase.DetailBySlug(ctx, slug)
+	service, err := handler.ProductService.DetailBySlug(ctx, slug)
 	if err.Errors != nil {
 		handler.App.Logger.Error(err)
 		resp = response.Error(err.Status, err.Message, err.Errors)
@@ -75,7 +75,7 @@ func (handler *ProductHandler) Detail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service, err := handler.Usecase.Detail(ctx, id)
+	service, err := handler.ProductService.Detail(ctx, id)
 	if err.Errors != nil {
 		handler.App.Logger.Error(err)
 		resp = response.Error(err.Status, err.Message, err.Errors)
@@ -99,7 +99,7 @@ func (handler *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service, err := handler.Usecase.Create(ctx, req)
+	service, err := handler.ProductService.Create(ctx, req)
 	if err.Errors != nil {
 		handler.App.Logger.Error(err)
 		resp = response.Error(err.Status, err.Message, err.Errors)
@@ -133,7 +133,7 @@ func (handler *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service, err := handler.Usecase.Update(ctx, id, req)
+	service, err := handler.ProductService.Update(ctx, id, req)
 	if err.Errors != nil {
 		handler.App.Logger.Error(err)
 		resp = response.Error(err.Status, err.Message, err.Errors)
@@ -160,7 +160,7 @@ func (handler *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service, err := handler.Usecase.Delete(ctx, id)
+	service, err := handler.ProductService.Delete(ctx, id)
 	if err.Errors != nil {
 		handler.App.Logger.Error(errs)
 		resp = response.Error(err.Status, err.Message, err.Errors)

@@ -40,3 +40,10 @@ func (a *User) ToUpdate() []interface{} {
 		a.Token,
 	}
 }
+
+func (a *User) ToUpdateVerifyStatus() []interface{} {
+	return []interface{}{
+		a.ID,
+		a.IsVerify,
+	}
+}

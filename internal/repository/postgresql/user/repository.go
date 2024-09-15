@@ -19,6 +19,7 @@ type UserRepository interface {
 	UserFindByEmail(ctx context.Context, email string) (resp entity.User, err error)
 	UserInsert(ctx context.Context, user entity.User) (err error)
 	UserUpdateTokenByID(ctx context.Context, user entity.User) (err error)
+	UserUpdateVerifyStatus(ctx context.Context, user entity.User) (err error)
 }
 
 type userRepository struct {
@@ -84,6 +85,15 @@ func (repo *userRepository) UserInsert(ctx context.Context, user entity.User) (e
 
 func (repo *userRepository) UserUpdateTokenByID(ctx context.Context, user entity.User) (err error) {
 	_, err = repo.app.Db.ExecContext(ctx, UPDATE_TOKEN_USER, user.ToUpdate()...)
+	if err != nil {
+		repo.app.Logger.Error(err)
+		return err
+	}
+	return nil
+}
+
+func (repo *userRepository) UserUpdateVerifyStatus(ctx context.Context, user entity.User) (err error) {
+	_, err = repo.app.Db.ExecContext(ctx, UPDATE_VERIFY_USER, user.ToUpdateVerifyStatus()...)
 	if err != nil {
 		repo.app.Logger.Error(err)
 		return err

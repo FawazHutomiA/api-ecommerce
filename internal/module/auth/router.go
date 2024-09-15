@@ -18,4 +18,5 @@ func SetupAuthRoutes(r chi.Router, app app.AppConfig) {
 	r.Post("/session", authHandler.Login)
 	r.Post("/login", authHandler.HandleLogin) // OAuth2 login
 	r.Get("/callback", authHandler.HandleCallback)
+	r.Get("/verify", authHandler.VerifyEmail)
 }

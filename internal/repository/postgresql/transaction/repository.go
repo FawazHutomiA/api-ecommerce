@@ -22,17 +22,17 @@ type TransactionRepository interface {
 	TransactionDelete(ctx context.Context, id uuid.UUID) (err error)
 }
 
-type transactionRepositoryImpl struct {
+type transactionRepository struct {
 	app app.AppConfig
 }
 
 func NewTransactionRepository(app app.AppConfig) TransactionRepository {
-	return &transactionRepositoryImpl{
+	return &transactionRepository{
 		app: app,
 	}
 }
 
-func (repo *transactionRepositoryImpl) TransactionFindAll(ctx context.Context, params helper.PaginationParams) (resp helper.Pagination, err error) {
+func (repo *transactionRepository) TransactionFindAll(ctx context.Context, params helper.PaginationParams) (resp helper.Pagination, err error) {
 	query := FIND_ALL
 
 	if params.Search != "" {
@@ -57,7 +57,7 @@ func (repo *transactionRepositoryImpl) TransactionFindAll(ctx context.Context, p
 	return result, nil
 }
 
-func (repo *transactionRepositoryImpl) TransactionFindByID(ctx context.Context, id uuid.UUID) (resp entity.Transaction, err error) {
+func (repo *transactionRepository) TransactionFindByID(ctx context.Context, id uuid.UUID) (resp entity.Transaction, err error) {
 	err = repo.app.Db.Get(&resp, FIND_BY_ID, id)
 	if err != nil {
 		repo.app.Logger.Error(err)
@@ -66,7 +66,7 @@ func (repo *transactionRepositoryImpl) TransactionFindByID(ctx context.Context, 
 	return resp, nil
 }
 
-func (repo *transactionRepositoryImpl) TransactionFindByProductID(ctx context.Context, productID uuid.UUID) (resp entity.Transaction, err error) {
+func (repo *transactionRepository) TransactionFindByProductID(ctx context.Context, productID uuid.UUID) (resp entity.Transaction, err error) {
 	err = repo.app.Db.Get(&resp, FIND_BY_PRODUCT_ID, productID)
 	if err != nil {
 		repo.app.Logger.Error(err)
@@ -75,7 +75,7 @@ func (repo *transactionRepositoryImpl) TransactionFindByProductID(ctx context.Co
 	return resp, nil
 }
 
-func (repo *transactionRepositoryImpl) TransactionFindByUserID(ctx context.Context, userID uuid.UUID) (resp entity.Transaction, err error) {
+func (repo *transactionRepository) TransactionFindByUserID(ctx context.Context, userID uuid.UUID) (resp entity.Transaction, err error) {
 	err = repo.app.Db.Get(&resp, FIND_BY_USER_ID, userID)
 	if err != nil {
 		repo.app.Logger.Error(err)
@@ -84,7 +84,7 @@ func (repo *transactionRepositoryImpl) TransactionFindByUserID(ctx context.Conte
 	return resp, nil
 }
 
-func (repo *transactionRepositoryImpl) TransactionInsert(ctx context.Context, transaction entity.Transaction) (err error) {
+func (repo *transactionRepository) TransactionInsert(ctx context.Context, transaction entity.Transaction) (err error) {
 	_, err = repo.app.Db.ExecContext(ctx, INSERT, transaction.ToInsert()...)
 	if err != nil {
 		repo.app.Logger.Error(err)
@@ -93,7 +93,7 @@ func (repo *transactionRepositoryImpl) TransactionInsert(ctx context.Context, tr
 	return nil
 }
 
-func (repo *transactionRepositoryImpl) TransactionUpdateByID(ctx context.Context, transaction entity.Transaction) (err error) {
+func (repo *transactionRepository) TransactionUpdateByID(ctx context.Context, transaction entity.Transaction) (err error) {
 	_, err = repo.app.Db.ExecContext(ctx, UPDATE_BY_ID, transaction.ToUpdate()...)
 	if err != nil {
 		repo.app.Logger.Error(err)
@@ -102,7 +102,7 @@ func (repo *transactionRepositoryImpl) TransactionUpdateByID(ctx context.Context
 	return nil
 }
 
-func (repo *transactionRepositoryImpl) TransactionDelete(ctx context.Context, id uuid.UUID) (err error) {
+func (repo *transactionRepository) TransactionDelete(ctx context.Context, id uuid.UUID) (err error) {
 	_, err = repo.app.Db.ExecContext(ctx, DELETE_BY_ID, id)
 	if err != nil {
 		repo.app.Logger.Error(err)

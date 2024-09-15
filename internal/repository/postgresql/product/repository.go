@@ -22,17 +22,17 @@ type ProductRepository interface {
 	ProductDelete(ctx context.Context, id uuid.UUID) (err error)
 }
 
-type productRepositoryImpl struct {
+type productRepository struct {
 	app app.AppConfig
 }
 
 func NewProductRepository(app app.AppConfig) ProductRepository {
-	return &productRepositoryImpl{
+	return &productRepository{
 		app: app,
 	}
 }
 
-func (repo *productRepositoryImpl) ProductFindAll(ctx context.Context, params helper.PaginationParams) (resp helper.Pagination, err error) {
+func (repo *productRepository) ProductFindAll(ctx context.Context, params helper.PaginationParams) (resp helper.Pagination, err error) {
 	query := FIND_ALL
 
 	if params.Search != "" {
@@ -57,7 +57,7 @@ func (repo *productRepositoryImpl) ProductFindAll(ctx context.Context, params he
 	return result, nil
 }
 
-func (repo *productRepositoryImpl) ProductFindByID(ctx context.Context, id uuid.UUID) (resp entity.Product, err error) {
+func (repo *productRepository) ProductFindByID(ctx context.Context, id uuid.UUID) (resp entity.Product, err error) {
 	err = repo.app.Db.Get(&resp, FIND_BY_ID, id)
 	if err != nil {
 		repo.app.Logger.Error(err)
@@ -66,7 +66,7 @@ func (repo *productRepositoryImpl) ProductFindByID(ctx context.Context, id uuid.
 	return resp, nil
 }
 
-func (repo *productRepositoryImpl) ProductFindByName(ctx context.Context, name string) (resp entity.Product, err error) {
+func (repo *productRepository) ProductFindByName(ctx context.Context, name string) (resp entity.Product, err error) {
 	err = repo.app.Db.GetContext(ctx, &resp, FIND_BY_NAME, name)
 	if err != nil {
 		repo.app.Logger.Error(err)
@@ -75,7 +75,7 @@ func (repo *productRepositoryImpl) ProductFindByName(ctx context.Context, name s
 	return resp, nil
 }
 
-func (repo *productRepositoryImpl) ProductFindBySlug(ctx context.Context, slug string) (resp entity.Product, err error) {
+func (repo *productRepository) ProductFindBySlug(ctx context.Context, slug string) (resp entity.Product, err error) {
 	err = repo.app.Db.GetContext(ctx, &resp, FIND_BY_SLUG, slug)
 	if err != nil {
 		repo.app.Logger.Error(err)
@@ -84,7 +84,7 @@ func (repo *productRepositoryImpl) ProductFindBySlug(ctx context.Context, slug s
 	return resp, nil
 }
 
-func (repo *productRepositoryImpl) ProductInsert(ctx context.Context, product entity.Product) (err error) {
+func (repo *productRepository) ProductInsert(ctx context.Context, product entity.Product) (err error) {
 	_, err = repo.app.Db.ExecContext(ctx, INSERT, product.ToInsert()...)
 	if err != nil {
 		repo.app.Logger.Error(err)
@@ -93,7 +93,7 @@ func (repo *productRepositoryImpl) ProductInsert(ctx context.Context, product en
 	return nil
 }
 
-func (repo *productRepositoryImpl) ProductUpdateByID(ctx context.Context, product entity.Product) (err error) {
+func (repo *productRepository) ProductUpdateByID(ctx context.Context, product entity.Product) (err error) {
 	_, err = repo.app.Db.ExecContext(ctx, UPDATE_BY_ID, product.ToUpdate()...)
 	if err != nil {
 		repo.app.Logger.Error(err)
@@ -102,7 +102,7 @@ func (repo *productRepositoryImpl) ProductUpdateByID(ctx context.Context, produc
 	return nil
 }
 
-func (repo *productRepositoryImpl) ProductDelete(ctx context.Context, id uuid.UUID) (err error) {
+func (repo *productRepository) ProductDelete(ctx context.Context, id uuid.UUID) (err error) {
 	_, err = repo.app.Db.ExecContext(ctx, DELETE_BY_ID, id)
 	if err != nil {
 		repo.app.Logger.Error(err)

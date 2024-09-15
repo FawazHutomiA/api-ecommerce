@@ -3,12 +3,17 @@ package auth
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"example/internal/entity"
 	"example/internal/repository/postgresql/user"
 	"example/pkg/app"
+	"example/pkg/email"
 	"example/pkg/exception"
 	"example/pkg/jwt"
+	jwtValidate "example/pkg/jwt"
+	"example/pkg/middleware"
 	"example/pkg/response"
+	"fmt"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -18,6 +23,7 @@ type AuthService interface {
 	Register(ctx context.Context, params AuthRegisterRequest) (resp AuthRegisterResponse, errData exception.Error)
 	Login(ctx context.Context, params AuthLoginRequest) (resp AuthLoginResponse, errData exception.Error)
 	GetOrSaveUser(ctx context.Context, params GoogleUser) (resp AuthLoginResponse, errData exception.Error)
+	VerifyUserEmail(ctx context.Context, token string) (resp AuthRegisterResponse, errData exception.Error)
 }
 
 type authService struct {
@@ -81,6 +87,17 @@ func (uc *authService) Register(ctx context.Context, params AuthRegisterRequest)
 			Status:  response.StatusBadRequest,
 			Message: "Something Wrong",
 			Errors:  exception.ErrBadRequest,
+		}
+	}
+
+	// Send verification email
+	verificationLink := fmt.Sprintf("http://localhost:8080/api/v1/verify?token=%s", jwtToken.Token)
+	err = email.SendVerificationEmailSMTP(params.Email, verificationLink)
+	if err != nil {
+		return resp, exception.Error{
+			Status:  response.StatusInternalServerError,
+			Message: "Failed to send verification email",
+			Errors:  exception.ErrInternalServer,
 		}
 	}
 
@@ -245,4 +262,56 @@ func (uc *authService) GetOrSaveUser(ctx context.Context, params GoogleUser) (re
 
 		return resp, errData
 	}
+}
+
+func (uc *authService) VerifyUserEmail(ctx context.Context, token string) (resp AuthRegisterResponse, errData exception.Error) {
+	tokenValidate, err := jwtValidate.ValidateToken(token)
+	if err != nil {
+		return resp, exception.Error{
+			Status:  response.StatusBadRequest,
+			Message: "Wrong token",
+			Errors:  exception.ErrBadRequest,
+		}
+	}
+
+	var claims middleware.Claims
+	claimsBytes, err := json.Marshal(tokenValidate.Claims)
+	if err != nil {
+		return resp, exception.Error{
+			Status:  response.StatusBadRequest,
+			Message: "Wrong token",
+			Errors:  exception.ErrBadRequest,
+		}
+	}
+	json.Unmarshal(claimsBytes, &claims)
+
+	userID := claims.Data.UserID
+
+	user, err := uc.repository.UserFindByID(ctx, userID)
+	if err != nil {
+		return resp, exception.Error{
+			Status:  response.StatusBadRequest,
+			Message: "Something Wrong",
+			Errors:  exception.ErrBadRequest,
+		}
+	}
+
+	// Update user's IsVerify field to true
+	user.IsVerify = true
+
+	err = uc.repository.UserUpdateVerifyStatus(ctx, user)
+	if err != nil {
+		return resp, exception.Error{
+			Status:  response.StatusBadRequest,
+			Message: "Something Wrong",
+			Errors:  exception.ErrBadRequest,
+		}
+	}
+
+	resp = AuthRegisterResponse{
+		ExpiredAt: claims.Iat,
+		Token:     token,
+	}
+
+	return resp, errData
 }

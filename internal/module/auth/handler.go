@@ -145,3 +145,21 @@ func (handler *AuthHandler) HandleCallback(w http.ResponseWriter, r *http.Reques
 	resp = response.Success(response.StatusOK, "Login Success", userLogin)
 	resp.JSON(w)
 }
+
+func (handler *AuthHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+	var resp response.Response
+	ctx := r.Context()
+
+	tokenStr := r.URL.Query().Get("token")
+
+	service, err := handler.AuthService.VerifyUserEmail(ctx, tokenStr)
+	if err.Errors != nil {
+		handler.App.Logger.Error(err)
+		resp = response.Error(err.Status, err.Message, err.Errors)
+		resp.JSON(w)
+		return
+	}
+
+	resp = response.Success(response.StatusOK, "Email successfully verified", service)
+	resp.JSON(w)
+}
