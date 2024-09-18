@@ -66,7 +66,7 @@ const (
     <div class="content" style="color: inherit; text-decoration: none;">
       <p>Silakan tekan tombol dibawah ini untuk verifikasi akun anda:</p>
       <p><a href="{$1}" style="color: white; text-decoration: none;" class="button-link"><strong>Verifikasi Akun</strong></a></p>
-      <p>Jika Anda membutuhkan bantuan, silakan hubungi <a href="mailto:noreply@learnhub.id" class="call-center">Call Center</a> kami.</p>
+      <p>Jika Anda membutuhkan bantuan, silakan hubungi <a href="mailto:noreply@example.id" class="call-center">Call Center</a> kami.</p>
       <p>Salam hangat,</p>
       <p>Tim Example</p>
       <img src="{example_main_logo}" alt="Example logo" style="height: 60px; margin: 0 auto; display: block" />

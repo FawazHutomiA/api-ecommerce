@@ -9,12 +9,12 @@ import (
 )
 
 type MailgunConfig struct {
-	Domain string // mg.learnhub.id
-	ApiKey string // 3abbda4592f14928828f77728e40c2af-413e373c-3d68a711
+	Domain string
+	ApiKey string
 }
 
 type MailgunData struct {
-	Sender     string // noreply@learnhub.id
+	Sender     string
 	Subject    string
 	Body       string
 	BodyHTML   string

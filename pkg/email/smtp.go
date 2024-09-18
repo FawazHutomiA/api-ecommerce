@@ -8,50 +8,22 @@ import (
 
 // SMTPConfig holds the SMTP server configuration.
 type SMTPConfig struct {
-	Host     string // SMTP server (e.g., smtp.mailgun.org)
-	Port     string // Port (e.g., "587")
-	Username string // Your SMTP username (e.g., "postmaster@mg.learnhub.id")
-	Password string // Your SMTP password (e.g., the Mailgun SMTP password)
+	Host     string
+	Port     string
+	Username string
+	Password string
 }
 
 // SMTPData holds the email data for sending.
 type SMTPData struct {
-	Sender     string   // Email sender (e.g., "noreply@learnhub.id")
-	Subject    string   // Email subject
-	Body       string   // Plain text email body
-	BodyHTML   string   // HTML email body
-	Recipients []string // Recipients' email addresses
-	Cc         []string // CC email addresses (optional)
-	Bcc        []string // BCC email addresses (optional)
+	Sender     string
+	Subject    string
+	Body       string
+	BodyHTML   string
+	Recipients []string
+	Cc         []string
+	Bcc        []string
 }
-
-// func SendVerificationEmailSMTP(to, verificationLink string) error {
-// 	emailFrom := helper.GetENV("EMAIL")
-// 	emailPassword := helper.GetENV("PASSWORD")
-// 	emailSmtpHost := helper.GetENV("SMTPHOST")
-// 	emailSmtpPort := helper.GetENV("SMTPPORT")
-
-// 	from := emailFrom
-
-// 	// Gunakan App Password dari Google, bukan password Gmail biasa
-// 	password := emailPassword // Ganti dengan App Password Anda
-
-// 	subject := "Please verify your email"
-// 	body := fmt.Sprintf("Click this link to verify your email: %s", verificationLink)
-
-// 	message := []byte(fmt.Sprintf("Subject: %s\n\n%s", subject, body))
-
-// 	smtpHost := emailSmtpHost
-// 	smtpPort := emailSmtpPort
-
-// 	auth := smtp.PlainAuth("", from, password, smtpHost)
-
-// 	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, []string{to}, message)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
 
 // SendSMTPEmail sends an email using SMTP.
 func SendSMTPEmail(config SMTPConfig, data SMTPData) error {
