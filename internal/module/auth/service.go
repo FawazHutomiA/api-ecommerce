@@ -11,7 +11,6 @@ import (
 	"example/pkg/exception"
 	"example/pkg/helper"
 	"example/pkg/jwt"
-	jwtValidate "example/pkg/jwt"
 	"example/pkg/middleware"
 	"example/pkg/response"
 	"fmt"
@@ -126,15 +125,15 @@ func (uc *authService) Register(ctx context.Context, params AuthRegisterRequest)
 	config := email.SMTPConfig{
 		Host:     helper.GetENV("SMTPHOST"),
 		Port:     helper.GetENV("SMTPPORT"),
-		Username: helper.GetENV("EMAIL"),    // Your SMTP username
-		Password: helper.GetENV("PASSWORD"), // Your SMTP password
+		Username: helper.GetENV("EMAIL"),
+		Password: helper.GetENV("PASSWORD"),
 	}
 
 	data := email.SMTPData{
 		Sender:     "noreply@example.id",
 		Subject:    fmt.Sprintf("Selamat Bergabung di %v!", "Example Web"),
-		BodyHTML:   bodyHTML,               // Pass the HTML body here
-		Recipients: []string{params.Email}, // Recipient's email
+		BodyHTML:   bodyHTML,
+		Recipients: []string{params.Email},
 	}
 
 	// Send verification email
@@ -146,36 +145,6 @@ func (uc *authService) Register(ctx context.Context, params AuthRegisterRequest)
 			Errors:  exception.ErrInternalServer,
 		}
 	}
-
-	// send verification email with mailgun
-	// logo := "https://img.freepik.com/free-vector/friends-logo-template_23-2149505594.jpg?w=740&t=st=1726542372~exp=1726542972~hmac=4478e2452e0c34d0dbfd075f12ba8ef05436cb5084576e0780ce0951cfd81ac8"
-	// link := fmt.Sprintf("http://localhost:8080/api/v1/verify?token=%s", jwtToken.Token)
-
-	// // Set Body HTML with Values
-	// bodyHTML := strings.Replace(helper.REGISTER_USER_EMAIL_HTML, "{example_main_logo}", logo, -1)
-	// bodyHTML = strings.Replace(bodyHTML, "{user_full_name}", params.Name, -1)
-	// bodyHTML = strings.Replace(bodyHTML, "{$1}", link, 1)
-
-	// mailConfig := email.MailgunConfig{
-	// 	Domain: helper.GetENV("DOMAIN"),
-	// 	ApiKey: helper.GetENV("API_KEY"),
-	// }
-
-	// data := email.MailgunData{
-	// 	Sender:     helper.GetENV("SENDER"),
-	// 	Subject:    fmt.Sprintf("Selamat Bergabung di %v!", "Example Web"),
-	// 	BodyHTML:   bodyHTML,
-	// 	Recipients: []string{params.Email},
-	// }
-
-	// _, err = email.SendMailgunEmail(mailConfig, data)
-	// if err != nil {
-	// 	return resp, exception.Error{
-	// 		Status:  response.StatusInternalServerError,
-	// 		Message: "Failed to send verification email",
-	// 		Errors:  exception.ErrInternalServer,
-	// 	}
-	// }
 
 	resp = AuthRegisterResponse{
 		ExpiredAt: jwtToken.Exp,
@@ -320,7 +289,7 @@ func (uc *authService) GetOrSaveUser(ctx context.Context, params GoogleUser) (re
 }
 
 func (uc *authService) VerifyUserEmail(ctx context.Context, token string) (resp AuthRegisterResponse, errData exception.Error) {
-	tokenValidate, err := jwtValidate.ValidateToken(token)
+	tokenValidate, err := jwt.ValidateToken(token)
 	if err != nil {
 		return resp, exception.Error{
 			Status:  response.StatusBadRequest,
