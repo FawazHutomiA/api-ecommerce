@@ -92,13 +92,4 @@ const (
 			updated_at = NOW()
 		WHERE id = $1
 	`
-
-	UPDATE_VERIFY_USER = `
-		UPDATE 
-			users
-		SET 
-			is_verify = $2, 
-			updated_at = NOW()
-		WHERE id = $1
-	`
 )

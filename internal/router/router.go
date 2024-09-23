@@ -1,9 +1,6 @@
 package router
 
 import (
-	"example/internal/module/auth"
-	"example/internal/module/product"
-	"example/internal/module/transaction"
 	"example/internal/module/user"
 	"example/pkg/app"
 
@@ -14,8 +11,5 @@ func SetupRoutes(r *chi.Mux, app app.AppConfig) {
 	// API V1
 	r.Route("/api/v1", func(r chi.Router) {
 		user.SetupUserRoutes(r, app)
-		auth.SetupAuthRoutes(r, app)
-		product.SetupProductRoutes(r, app)
-		transaction.SetupTransactionRoutes(r, app)
 	})
 }

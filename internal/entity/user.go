@@ -41,9 +41,3 @@ func (a *User) ToUpdate() []interface{} {
 	}
 }
 
-func (a *User) ToUpdateVerifyStatus() []interface{} {
-	return []interface{}{
-		a.ID,
-		a.IsVerify,
-	}
-}

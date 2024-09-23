@@ -1,33 +1,33 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 CREATE TYPE "gender" AS ENUM (
-  'pria',
-  'wanita'
+  'male',
+  'female'
 );
 
 CREATE TABLE IF NOT EXISTS "users" (
     "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "role_id" uuid,
+    "warehouse_id" uuid,
     "name" varchar(255) NOT NULL,
     "email" varchar(255) UNIQUE NOT NULL,
-    "occupation" varchar,
     "password" text,
     "phone" varchar(15),
     "gender" gender,
-    "role" varchar,
-    "token" text NOT NULL,
-    "is_google" boolean DEFAULT false,
+    "birth" timestamptz,
     "is_active" boolean NOT NULL DEFAULT true,
-    "is_verify" boolean DEFAULT false,
     "created_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" timestamptz,
-    "deleted_at" timestamptz
+    "deleted_at" timestamptz,
+
+    CONSTRAINT "fk_role_id" FOREIGN KEY ("role_id") REFERENCES "access_role" ("id"),
+    CONSTRAINT "fk_warehouse_id" FOREIGN KEY ("warehouse_id") REFERENCES "warehouse" ("id")
 );
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
+ALTER TABLE "users" DROP CONSTRAINT "fk_role_id";
+ALTER TABLE "users" DROP CONSTRAINT "fk_warehouse_id";
 DROP TABLE IF EXISTS "users";
-DROP TYPE IF EXISTS "gender";
 -- +goose StatementEnd
