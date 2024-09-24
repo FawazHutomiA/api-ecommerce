@@ -1,43 +1,56 @@
 package entity
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
 type User struct {
-	ID         uuid.UUID `db:"id" json:"id"`
-	Name       string    `db:"name" json:"name"`
-	Email      string    `db:"email" json:"email"`
-	Occupation *string   `db:"occupation" json:"occupation"`
-	Password   *string   `db:"password" json:"password,omitempty"`
-	Phone      *string   `db:"phone" json:"phone"`
-	Gender     *string   `db:"gender" json:"gender"`
-	Role       string    `db:"role" json:"role"`
-	Token      string    `db:"token" json:"token"`
-	IsGoogle   bool      `db:"is_google" json:"isGoogle"`
-	IsActive   bool      `db:"is_active" json:"isActive"`
-	IsVerify   bool      `db:"is_verify" json:"isVerify"`
+	ID          uuid.UUID `db:"id" json:"ID"`
+	RoleID      uuid.UUID `db:"role_id" json:"roleID"`
+	WarehouseID uuid.UUID `db:"warehouse_id" json:"warehouseID"`
+	Name        string    `db:"name" json:"name"`
+	Email       string    `db:"email" json:"email"`
+	Password    *string   `db:"password" json:"password,omitempty"`
+	Phone       string    `db:"phone" json:"phone"`
+	Gender      string    `db:"gender" json:"gender"`
+	Birth       time.Time `db:"birth" json:"birth"`
+	IsActive    bool      `db:"is_active" json:"isActive"`
+}
+
+type UserRole struct {
+	ID    uuid.UUID `db:"id" json:"id"`
+	Email string    `db:"email" json:"email"`
+	Role  string    `db:"role" json:"role"`
 }
 
 func (a *User) ToInsert() []interface{} {
 	return []interface{}{
 		a.ID,
+		a.RoleID,
+		a.WarehouseID,
 		a.Name,
 		a.Email,
-		a.Occupation,
 		a.Password,
 		a.Phone,
-		a.Role,
 		a.Gender,
-		a.IsGoogle,
-		a.Token,
+		a.Birth,
+		a.IsActive,
 	}
 }
 
 func (a *User) ToUpdate() []interface{} {
 	return []interface{}{
 		a.ID,
-		a.Token,
+		a.RoleID,
+		a.WarehouseID,
+		a.Name,
+		a.Email,
+		a.Password,
+		a.Phone,
+		a.Gender,
+		a.Birth,
+		a.IsActive,
 	}
 }
-

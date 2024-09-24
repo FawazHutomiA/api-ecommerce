@@ -3,16 +3,15 @@ package user
 const (
 	FIND_ALL = `
 		SELECT 
-			u.id, 
+			u.id,
+			u.role_id,
+			u.warehouse_id, 
 			u.name, 
 			u.email, 
-			u.occupation, 
 			u.phone, 
 			u.gender, 
-			u.role,
-			u.is_google,
-			u.is_active,
-			u.is_verify
+			u.birth,
+			u.is_active
 		FROM 
 			users u
 		WHERE 
@@ -21,54 +20,64 @@ const (
 
 	FIND_BY_ID = `
 		SELECT 
-			u.id, 
+			u.id,
+			u.role_id,
+			u.warehouse_id, 
 			u.name, 
 			u.email, 
-			u.occupation, 
 			u.phone, 
 			u.gender, 
-			u.role,
-			u.is_google,
-			u.is_active,
-			u.is_verify
+			u.birth,
+			u.is_active
 		FROM 
 			users u
 		WHERE 
-			u.id = $1;
+			u.id = $1 and u.deleted_at IS NULL
 	`
 
 	FIND_BY_EMAIL = `
 		SELECT 
-			u.id, 
+			u.id,
+			u.role_id,
+			u.warehouse_id, 
 			u.name, 
 			u.email, 
-			u.occupation, 
-			u.password,
 			u.phone, 
 			u.gender, 
-			u.role,
-			u.is_google,
-			u.is_active,
-			u.is_verify
+			u.birth,
+			u.is_active
 		FROM 
 			users u
 		WHERE 
-			u.email = $1;
+			u.email = $1
+	`
+
+	FIND_USER_ROLE = `
+		SELECT 
+			u.id, 
+			u.email, 
+			ar."name" "role" 
+		FROM 
+			users u 
+		JOIN 
+			access_role ar on ar.id = u.role_id 
+		WHERE 
+			u.email = $1 and u.deleted_at IS NULL
 	`
 
 	INSERT = `
 		INSERT INTO 
 			users (
 				id, 
+				role_id,
+				warehouse_id,
 				name,
 				email, 
-				occupation,
 				password, 
 				phone,
-				role, 
 				gender,
-				is_google,
-				token
+				birth,
+				is_active
 			) 
 		VALUES (
 			$1, 
@@ -84,12 +93,30 @@ const (
 		)
 	`
 
-	UPDATE_TOKEN_USER = `
+	UPDATE_BY_ID = `
 		UPDATE 
 			users
 		SET 
-			token = $2, 
+			role_id = $2,
+			warehouse_id = $3,
+			name = $4,
+			email = $5,
+			password = $6,
+			phone = $7,
+			gender = $8,
+			birth = $9,
+			is_active = $10,
 			updated_at = NOW()
-		WHERE id = $1
+		WHERE 
+			id = $1
+	`
+
+	DELETE_BY_ID = `
+		UPDATE 
+			users
+		SET 
+			deleted_at = NOW()
+		WHERE 
+			id = $1
 	`
 )

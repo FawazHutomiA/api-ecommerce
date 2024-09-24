@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"database/sql"
 	"example/internal/entity"
 	"example/pkg/app"
 	"example/pkg/helper"
@@ -17,8 +18,10 @@ type UserRepository interface {
 	UserFindAll(ctx context.Context, params helper.PaginationParams) (resp helper.Pagination, err error)
 	UserFindByID(ctx context.Context, id uuid.UUID) (resp entity.User, err error)
 	UserFindByEmail(ctx context.Context, email string) (resp entity.User, err error)
-	UserInsert(ctx context.Context, user entity.User) (err error)
-	UserUpdateTokenByID(ctx context.Context, user entity.User) (err error)
+	UserRoleFindByEmail(ctx context.Context, email string) (resp entity.UserRole, err error)
+	UserInsert(ctx context.Context, tx *sql.Tx, user entity.User) (err error)
+	UserUpdate(ctx context.Context, user entity.User) (err error)
+	UserDelete(ctx context.Context, tx *sql.Tx, id uuid.UUID) (err error)
 }
 
 type userRepository struct {
@@ -36,7 +39,7 @@ func (repo *userRepository) UserFindAll(ctx context.Context, params helper.Pagin
 
 	if params.Search != "" {
 		escapedSearch := strings.Replace(params.Search, "'", "''", -1)
-		addFilter := fmt.Sprintf("AND (u.full_name ILIKE '%%%s%%' OR u.email ILIKE '%%%s%%')", escapedSearch, escapedSearch)
+		addFilter := fmt.Sprintf("AND (u.name ILIKE '%%%s%%' OR u.email ILIKE '%%%s%%')", escapedSearch, escapedSearch)
 		query = fmt.Sprintf("%s %s", query, addFilter)
 	}
 
@@ -73,8 +76,17 @@ func (repo *userRepository) UserFindByEmail(ctx context.Context, email string) (
 	return resp, nil
 }
 
-func (repo *userRepository) UserInsert(ctx context.Context, user entity.User) (err error) {
-	_, err = repo.app.Db.ExecContext(ctx, INSERT, user.ToInsert()...)
+func (repo *userRepository) UserRoleFindByEmail(ctx context.Context, email string) (resp entity.UserRole, err error) {
+	err = repo.app.Db.GetContext(ctx, &resp, FIND_USER_ROLE, email)
+	if err != nil {
+		repo.app.Logger.Error(err)
+		return resp, err
+	}
+	return resp, nil
+}
+
+func (repo *userRepository) UserInsert(ctx context.Context, tx *sql.Tx, user entity.User) (err error) {
+	_, err = tx.ExecContext(ctx, INSERT, user.ToInsert()...)
 	if err != nil {
 		repo.app.Logger.Error(err)
 		return err
@@ -82,8 +94,17 @@ func (repo *userRepository) UserInsert(ctx context.Context, user entity.User) (e
 	return nil
 }
 
-func (repo *userRepository) UserUpdateTokenByID(ctx context.Context, user entity.User) (err error) {
-	_, err = repo.app.Db.ExecContext(ctx, UPDATE_TOKEN_USER, user.ToUpdate()...)
+func (repo *userRepository) UserUpdate(ctx context.Context, user entity.User) (err error) {
+	_, err = repo.app.Db.ExecContext(ctx, UPDATE_BY_ID, user.ToUpdate()...)
+	if err != nil {
+		repo.app.Logger.Error(err)
+		return err
+	}
+	return nil
+}
+
+func (repo *userRepository) UserDelete(ctx context.Context, tx *sql.Tx, id uuid.UUID) (err error) {
+	_, err = tx.ExecContext(ctx, DELETE_BY_ID, id)
 	if err != nil {
 		repo.app.Logger.Error(err)
 		return err

@@ -19,6 +19,9 @@ CREATE TABLE IF NOT EXISTS "users" (
     "created_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" timestamptz,
     "deleted_at" timestamptz,
+    "created_by" uuid,
+    "updated_by" uuid,
+    "deleted_by" uuid,
 
     CONSTRAINT "fk_role_id" FOREIGN KEY ("role_id") REFERENCES "access_role" ("id"),
     CONSTRAINT "fk_warehouse_id" FOREIGN KEY ("warehouse_id") REFERENCES "warehouse" ("id")
@@ -30,4 +33,5 @@ CREATE TABLE IF NOT EXISTS "users" (
 ALTER TABLE "users" DROP CONSTRAINT "fk_role_id";
 ALTER TABLE "users" DROP CONSTRAINT "fk_warehouse_id";
 DROP TABLE IF EXISTS "users";
+DROP TYPE IF EXISTS "gender";
 -- +goose StatementEnd
