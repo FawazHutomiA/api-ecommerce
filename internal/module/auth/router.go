@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"example/internal/repository/postgresql/role"
 	"example/internal/repository/postgresql/token"
 	"example/internal/repository/postgresql/user"
 	"example/pkg/app"
@@ -12,8 +13,10 @@ func SetupAuthRoutes(r chi.Router, app app.AppConfig) {
 	// Initialize repositories and services
 	userRepository := user.NewUserRepository(app)
 	tokenRepository := token.NewTokenRepository(app)
+	roleRepository := role.NewRoleRepository(app)
 
-	authService := NewAuthService(app, userRepository, tokenRepository)
+	authService := NewAuthService(app, userRepository, tokenRepository, roleRepository)
+
 	authHandler := NewAuthHandler(app, authService)
 
 	r.Post("/register", authHandler.Register)

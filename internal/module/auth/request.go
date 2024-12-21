@@ -13,6 +13,7 @@ type AuthLoginRequest struct {
 
 type AuthRegisterRequest struct {
 	WarehouseID uuid.UUID `json:"warehouseID" validate:"required"`
+	RoleID      uuid.UUID `json:"roleID" validate:"required"`
 	Name        string    `json:"name"`
 	Email       string    `json:"email" validate:"email"`
 	Password    string    `json:"password" validate:"required,min=8"`

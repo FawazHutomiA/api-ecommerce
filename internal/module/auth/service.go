@@ -1,10 +1,8 @@
 package auth
 
 import (
-	"context"
-	"database/sql"
-	"encoding/json"
 	"example/internal/entity"
+	"example/internal/repository/postgresql/role"
 	"example/internal/repository/postgresql/token"
 	"example/internal/repository/postgresql/user"
 	"example/pkg/app"
@@ -14,36 +12,42 @@ import (
 	"example/pkg/middleware"
 	"example/pkg/response"
 	"example/pkg/sqlx"
+
+	"context"
+	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type AuthService interface {
-	Register(ctx context.Context, params AuthRegisterRequest) (resp AuthRegisterResponse, errData exception.Error)
-	Login(ctx context.Context, params AuthLoginRequest) (resp AuthLoginResponse, errData exception.Error)
+	Register(ctx context.Context, params AuthRegisterRequest) (resp *AuthRegisterResponse, errData exception.Error)
+	Login(ctx context.Context, params AuthLoginRequest) (resp *AuthLoginResponse, errData exception.Error)
 }
 
 type authService struct {
 	app        app.AppConfig
 	repository user.UserRepository
 	tokenRepo  token.TokenRepository
+	roleRepo   role.RoleRepository
 }
 
-func NewAuthService(app app.AppConfig, repository user.UserRepository, tokenRepo token.TokenRepository) AuthService {
+func NewAuthService(app app.AppConfig, repository user.UserRepository, tokenRepo token.TokenRepository, roleRepo role.RoleRepository) AuthService {
 	return &authService{
 		app:        app,
 		repository: repository,
 		tokenRepo:  tokenRepo,
+		roleRepo:   roleRepo,
 	}
 }
 
-func (uc *authService) Register(ctx context.Context, params AuthRegisterRequest) (resp AuthRegisterResponse, errData exception.Error) {
+func (uc *authService) Register(ctx context.Context, params AuthRegisterRequest) (resp *AuthRegisterResponse, errData exception.Error) {
 	// Check User
 	_, err := uc.repository.UserFindByEmail(ctx, params.Email)
 	switch err {
 	case nil:
-		return resp, exception.Error{
+		return nil, exception.Error{
 			Status:  response.StatusConflicted,
 			Message: "This Email Has Registered, Please Login",
 			Errors:  exception.ErrConflicted,
@@ -51,7 +55,7 @@ func (uc *authService) Register(ctx context.Context, params AuthRegisterRequest)
 	case sql.ErrNoRows:
 		err = nil
 	default:
-		return resp, exception.Error{
+		return nil, exception.Error{
 			Status:  response.StatusBadRequest,
 			Message: "Something Wrong",
 			Errors:  exception.ErrBadRequest,
@@ -61,13 +65,12 @@ func (uc *authService) Register(ctx context.Context, params AuthRegisterRequest)
 	// init data
 	userID := uuid.New()
 	tokenID := uuid.New()
-	roleName := "admin"
-	roleID := "df302e3e-2256-488a-86ab-cb3ebbbab046"
-	roleIDParse, err := uuid.Parse(roleID)
+
+	roleRepo, err := uc.roleRepo.RoleFindByID(ctx, params.RoleID)
 	if err != nil {
-		return resp, exception.Error{
+		return nil, exception.Error{
 			Status:  response.StatusBadRequest,
-			Message: "Something Wrong",
+			Message: "Failed to get data role by id",
 			Errors:  exception.ErrBadRequest,
 		}
 	}
@@ -75,30 +78,30 @@ func (uc *authService) Register(ctx context.Context, params AuthRegisterRequest)
 	// hash password
 	hashedPassword, err := bcrypt.HashPassword(10, params.Password)
 	if err != nil {
-		return resp, exception.Error{
+		return nil, exception.Error{
 			Status:  response.StatusInternalServerError,
-			Message: "Error",
+			Message: "Failed to hash password",
 			Errors:  exception.ErrInternalServer,
 		}
 	}
 
 	paramsToken := jwt.DataToken{
 		UserID: userID,
-		Role:   roleName,
+		Role:   roleRepo.Name,
 	}
 
 	jwtToken, err := jwt.GenerateToken(paramsToken)
 	if err != nil {
-		return resp, exception.Error{
+		return nil, exception.Error{
 			Status:  response.StatusBadRequest,
-			Message: "Something Wrong",
+			Message: "Failed to generate token",
 			Errors:  exception.ErrBadRequest,
 		}
 	}
 
 	user := entity.User{
 		ID:          userID,
-		RoleID:      roleIDParse,
+		RoleID:      params.RoleID,
 		WarehouseID: params.WarehouseID,
 		Name:        params.Name,
 		Email:       params.Email,
@@ -112,7 +115,7 @@ func (uc *authService) Register(ctx context.Context, params AuthRegisterRequest)
 	// Transaction
 	tx, err := sqlx.BeginTx(uc.app.Db, ctx)
 	if err != nil {
-		return resp, exception.Error{
+		return nil, exception.Error{
 			Status:  response.StatusInternalServerError,
 			Message: "Error",
 			Errors:  exception.ErrInternalServer,
@@ -122,16 +125,16 @@ func (uc *authService) Register(ctx context.Context, params AuthRegisterRequest)
 	// save to db
 	err = uc.repository.UserInsert(ctx, tx, user)
 	if err != nil {
-		return resp, exception.Error{
+		return nil, exception.Error{
 			Status:  response.StatusInternalServerError,
-			Message: "Error",
+			Message: "Failed to insert data user",
 			Errors:  exception.ErrInternalServer,
 		}
 	}
 
 	tokenValidate, err := jwt.ValidateToken(jwtToken.Token)
 	if err != nil {
-		return resp, exception.Error{
+		return nil, exception.Error{
 			Status:  response.StatusBadRequest,
 			Message: "Wrong token",
 			Errors:  exception.ErrBadRequest,
@@ -141,7 +144,7 @@ func (uc *authService) Register(ctx context.Context, params AuthRegisterRequest)
 	var claims middleware.Claims
 	claimsBytes, err := json.Marshal(tokenValidate.Claims)
 	if err != nil {
-		return resp, exception.Error{
+		return nil, exception.Error{
 			Status:  response.StatusBadRequest,
 			Message: "Wrong token",
 			Errors:  exception.ErrBadRequest,
@@ -162,16 +165,16 @@ func (uc *authService) Register(ctx context.Context, params AuthRegisterRequest)
 
 	err = uc.tokenRepo.TokenInsert(ctx, tx, dataToken)
 	if err != nil {
-		return resp, exception.Error{
+		return nil, exception.Error{
 			Status:  response.StatusBadRequest,
-			Message: "Something Wrong",
+			Message: "Failed to insert data token",
 			Errors:  exception.ErrBadRequest,
 		}
 	}
 
 	err = sqlx.Commit(tx, ctx)
 	if err != nil {
-		return resp, exception.Error{
+		return nil, exception.Error{
 			Status:  response.StatusInternalServerError,
 			Message: "Error",
 			Errors:  exception.ErrInternalServer,
@@ -179,7 +182,7 @@ func (uc *authService) Register(ctx context.Context, params AuthRegisterRequest)
 	}
 	// End Transaction
 
-	resp = AuthRegisterResponse{
+	resp = &AuthRegisterResponse{
 		ExpiredAt: jwtToken.Exp,
 		Token:     jwtToken.Token,
 	}
@@ -187,19 +190,19 @@ func (uc *authService) Register(ctx context.Context, params AuthRegisterRequest)
 	return resp, errData
 }
 
-func (uc *authService) Login(ctx context.Context, params AuthLoginRequest) (resp AuthLoginResponse, errData exception.Error) {
+func (uc *authService) Login(ctx context.Context, params AuthLoginRequest) (resp *AuthLoginResponse, errData exception.Error) {
 	userRepo, err := uc.repository.UserFindByEmail(ctx, params.Email)
 	switch err {
 	case nil:
 		err = nil
 	case sql.ErrNoRows:
-		return resp, exception.Error{
+		return nil, exception.Error{
 			Status:  response.StatusUnauthorized,
 			Message: "Invalid Email / Password",
 			Errors:  exception.ErrUnauthorized,
 		}
 	default:
-		return resp, exception.Error{
+		return nil, exception.Error{
 			Status:  response.StatusBadRequest,
 			Message: "Something Wrong",
 			Errors:  exception.ErrBadRequest,
@@ -211,13 +214,13 @@ func (uc *authService) Login(ctx context.Context, params AuthLoginRequest) (resp
 	case nil:
 		err = nil
 	case sql.ErrNoRows:
-		return resp, exception.Error{
+		return nil, exception.Error{
 			Status:  response.StatusUnauthorized,
 			Message: "Invalid Email / Password",
 			Errors:  exception.ErrUnauthorized,
 		}
 	default:
-		return resp, exception.Error{
+		return nil, exception.Error{
 			Status:  response.StatusBadRequest,
 			Message: "Something Wrong",
 			Errors:  exception.ErrBadRequest,
@@ -231,16 +234,16 @@ func (uc *authService) Login(ctx context.Context, params AuthLoginRequest) (resp
 
 	jwtToken, err := jwt.GenerateToken(paramsToken)
 	if err != nil {
-		return resp, exception.Error{
+		return nil, exception.Error{
 			Status:  response.StatusBadRequest,
-			Message: "Something Wrong",
+			Message: "Failed to generate token",
 			Errors:  exception.ErrBadRequest,
 		}
 	}
 
 	tokenValidate, err := jwt.ValidateToken(jwtToken.Token)
 	if err != nil {
-		return resp, exception.Error{
+		return nil, exception.Error{
 			Status:  response.StatusBadRequest,
 			Message: "Wrong token",
 			Errors:  exception.ErrBadRequest,
@@ -250,7 +253,7 @@ func (uc *authService) Login(ctx context.Context, params AuthLoginRequest) (resp
 	var claims middleware.Claims
 	claimsBytes, err := json.Marshal(tokenValidate.Claims)
 	if err != nil {
-		return resp, exception.Error{
+		return nil, exception.Error{
 			Status:  response.StatusBadRequest,
 			Message: "Wrong token",
 			Errors:  exception.ErrBadRequest,
@@ -274,9 +277,9 @@ func (uc *authService) Login(ctx context.Context, params AuthLoginRequest) (resp
 
 		err = uc.tokenRepo.TokenUpdate(ctx, dataToken)
 		if err != nil {
-			return resp, exception.Error{
+			return nil, exception.Error{
 				Status:  response.StatusBadRequest,
-				Message: "Something Wrong",
+				Message: "Failed to update token",
 				Errors:  exception.ErrBadRequest,
 			}
 		}
@@ -303,9 +306,9 @@ func (uc *authService) Login(ctx context.Context, params AuthLoginRequest) (resp
 
 		err = uc.tokenRepo.TokenInsert(ctx, tx, dataToken)
 		if err != nil {
-			return resp, exception.Error{
+			return nil, exception.Error{
 				Status:  response.StatusBadRequest,
-				Message: "Something Wrong",
+				Message: "Failed to inser data token",
 				Errors:  exception.ErrBadRequest,
 			}
 		}
@@ -320,14 +323,14 @@ func (uc *authService) Login(ctx context.Context, params AuthLoginRequest) (resp
 		}
 		// End Transaction
 	default:
-		return resp, exception.Error{
+		return nil, exception.Error{
 			Status:  response.StatusBadRequest,
 			Message: "Something Wrong",
 			Errors:  exception.ErrBadRequest,
 		}
 	}
 
-	resp = AuthLoginResponse{
+	resp = &AuthLoginResponse{
 		ExpiredAt: jwtToken.Exp,
 		Token:     jwtToken.Token,
 	}
