@@ -153,3 +153,22 @@ func (handler *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	resp = response.Success(response.StatusOK, "Success", service)
 	resp.JSON(w)
 }
+
+func (handler *UserHandler) UserMe(w http.ResponseWriter, r *http.Request) {
+	// Init
+	var resp response.Response
+	ctx := r.Context()
+
+	userId := ctx.Value("userID").(uuid.UUID)
+
+	service, err := handler.UserService.Detail(ctx, userId)
+	if err.Errors != nil {
+		handler.App.Logger.Error(err)
+		resp = response.Error(err.Status, err.Message, err.Errors)
+		resp.JSON(w)
+		return
+	}
+
+	resp = response.Success(response.StatusOK, "Success", service)
+	resp.JSON(w)
+}

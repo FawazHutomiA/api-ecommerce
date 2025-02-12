@@ -227,6 +227,24 @@ func (uc *authService) Login(ctx context.Context, params AuthLoginRequest) (resp
 		}
 	}
 
+	// Check Password
+	valid := bcrypt.ComparePasswordHash(params.Password, *userRoleRepo.Password)
+	if !valid {
+		return resp, exception.Error{
+			Status:  response.StatusUnauthorized,
+			Message: "Invalid Password",
+			Errors:  exception.ErrUnauthorized,
+		}
+	}
+
+	if !userRepo.IsActive {
+		return resp, exception.Error{
+			Status:  response.StatusBadRequest,
+			Message: "Your account has not active yet",
+			Errors:  exception.ErrBadRequest,
+		}
+	}
+
 	paramsToken := jwt.DataToken{
 		UserID: userRepo.ID,
 		Role:   userRoleRepo.Role,

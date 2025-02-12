@@ -56,7 +56,8 @@ const (
 		SELECT 
 			u.id, 
 			u.email, 
-			ar."name" "role" 
+			ar."name" "role",
+			u.password
 		FROM 
 			users u 
 		JOIN 

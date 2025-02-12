@@ -23,5 +23,6 @@ func SetupUserRoutes(r chi.Router, app app.AppConfig) {
 		r.Post("/", userHandler.Create)
 		r.Put("/{id:[a-fA-F0-9-]{36}}", userHandler.Update)
 		r.Delete("/{id:[a-fA-F0-9-]{36}}", userHandler.Delete)
+		r.Get("/me", userHandler.UserMe)
 	})
 }

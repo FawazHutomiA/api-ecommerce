@@ -20,9 +20,10 @@ type User struct {
 }
 
 type UserRole struct {
-	ID    uuid.UUID `db:"id" json:"id"`
-	Email string    `db:"email" json:"email"`
-	Role  string    `db:"role" json:"role"`
+	ID       uuid.UUID `db:"id" json:"id"`
+	Email    string    `db:"email" json:"email"`
+	Role     string    `db:"role" json:"role"`
+	Password *string   `db:"password" json:"password"`
 }
 
 func (a *User) ToInsert() []interface{} {
