@@ -3,6 +3,7 @@ package sqlx
 import (
 	"example/pkg/helper"
 	"fmt"
+	"math"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -54,7 +55,7 @@ func (p *PaginationMetadata) GetPagination(query string, param helper.Pagination
 		CurrentPage:  page,
 		PageSize:     limit,
 		FirstPage:    1,
-		LastPage:     total/limit + 1,
+		LastPage:     int(math.Ceil(float64(total) / float64(limit))),
 		TotalRecords: total,
 		Records:      dest,
 	}, nil
