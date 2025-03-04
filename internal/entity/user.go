@@ -7,16 +7,19 @@ import (
 )
 
 type User struct {
-	ID          uuid.UUID `db:"id" json:"ID"`
-	RoleID      uuid.UUID `db:"role_id" json:"roleID"`
-	WarehouseID uuid.UUID `db:"warehouse_id" json:"warehouseID"`
-	Name        string    `db:"name" json:"name"`
-	Email       string    `db:"email" json:"email"`
-	Password    *string   `db:"password" json:"password,omitempty"`
-	Phone       string    `db:"phone" json:"phone"`
-	Gender      string    `db:"gender" json:"gender"`
-	Birth       time.Time `db:"birth" json:"birth"`
-	IsActive    bool      `db:"is_active" json:"isActive"`
+	ID            uuid.UUID  `db:"id" json:"ID"`
+	RoleID        uuid.UUID  `db:"role_id" json:"roleID"`
+	WarehouseID   uuid.UUID  `db:"warehouse_id" json:"warehouseID"`
+	Name          string     `db:"name" json:"name"`
+	Email         string     `db:"email" json:"email"`
+	Password      *string    `db:"password" json:"password,omitempty"`
+	Phone         string     `db:"phone" json:"phone"`
+	Gender        string     `db:"gender" json:"gender"`
+	Birth         time.Time  `db:"birth" json:"birth"`
+	IsActive      bool       `db:"is_active" json:"isActive"`
+	RoleName      string     `db:"role_name" json:"roleName"`
+	WarehouseName string     `db:"warehouse_name" json:"warehouseName"`
+	CreatedAt     *time.Time `db:"created_at" json:"createdAt"`
 }
 
 type UserRole struct {

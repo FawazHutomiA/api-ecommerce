@@ -11,9 +11,16 @@ const (
 			u.phone, 
 			u.gender, 
 			u.birth,
-			u.is_active
+			u.is_active,
+			ac.name as role_name,
+			w.name as warehouse_name,
+			u.created_at
 		FROM 
 			users u
+		LEFT JOIN
+			access_role ac ON ac.id = u.role_id
+		LEFT JOIN
+			warehouse w ON w.id = u.warehouse_id
 		WHERE 
     		u.deleted_at IS NULL
 	`
