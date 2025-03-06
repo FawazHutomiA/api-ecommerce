@@ -74,15 +74,14 @@ func (uc *userService) Detail(ctx context.Context, id uuid.UUID) (resp UserDetai
 
 	// map response
 	resp = UserDetailResponse{
-		ID:          id,
-		RoleID:      repoUser.RoleID,
-		WarehouseID: repoUser.WarehouseID,
-		Name:        repoUser.Name,
-		Email:       repoUser.Email,
-		Phone:       repoUser.Phone,
-		Gender:      repoUser.Gender,
-		Birth:       repoUser.Birth,
-		IsActive:    repoUser.IsActive,
+		ID:       id,
+		RoleID:   repoUser.RoleID,
+		Name:     repoUser.Name,
+		Email:    repoUser.Email,
+		Phone:    repoUser.Phone,
+		Gender:   repoUser.Gender,
+		Birth:    repoUser.Birth,
+		IsActive: repoUser.IsActive,
 	}
 
 	return resp, errData
@@ -123,16 +122,15 @@ func (uc *userService) Create(ctx context.Context, params UserCreateRequest) (re
 
 	// map insert
 	user := entity.User{
-		ID:          userID,
-		RoleID:      params.RoleID,
-		WarehouseID: params.WarehouseID,
-		Name:        params.Name,
-		Email:       params.Email,
-		Password:    &hashedPassword,
-		Phone:       params.Phone,
-		Gender:      params.Gender,
-		Birth:       params.Birth,
-		IsActive:    params.IsActive,
+		ID:       userID,
+		RoleID:   params.RoleID,
+		Name:     params.Name,
+		Email:    params.Email,
+		Password: &hashedPassword,
+		Phone:    params.Phone,
+		Gender:   params.Gender,
+		Birth:    params.Birth,
+		IsActive: params.IsActive,
 	}
 
 	// Transaction
@@ -167,16 +165,15 @@ func (uc *userService) Create(ctx context.Context, params UserCreateRequest) (re
 
 	// map response
 	resp = UserCreateResponse{
-		ID:          userID,
-		RoleID:      params.RoleID,
-		WarehouseID: params.WarehouseID,
-		Name:        params.Name,
-		Email:       params.Email,
-		Password:    params.Password,
-		Phone:       params.Phone,
-		Gender:      params.Gender,
-		Birth:       params.Birth,
-		IsActive:    params.IsActive,
+		ID:       userID,
+		RoleID:   params.RoleID,
+		Name:     params.Name,
+		Email:    params.Email,
+		Password: params.Password,
+		Phone:    params.Phone,
+		Gender:   params.Gender,
+		Birth:    params.Birth,
+		IsActive: params.IsActive,
 	}
 
 	return resp, errData
@@ -215,16 +212,15 @@ func (uc *userService) Update(ctx context.Context, id uuid.UUID, params UserUpda
 
 	// map insert
 	user := entity.User{
-		ID:          id,
-		RoleID:      params.RoleID,
-		WarehouseID: params.WarehouseID,
-		Name:        params.Name,
-		Email:       params.Email,
-		Password:    &hashedPassword,
-		Phone:       params.Phone,
-		Gender:      params.Gender,
-		Birth:       params.Birth,
-		IsActive:    params.IsActive,
+		ID:       id,
+		RoleID:   params.RoleID,
+		Name:     params.Name,
+		Email:    params.Email,
+		Password: &hashedPassword,
+		Phone:    params.Phone,
+		Gender:   params.Gender,
+		Birth:    params.Birth,
+		IsActive: params.IsActive,
 	}
 
 	err = uc.repository.UserUpdate(ctx, user)
@@ -238,16 +234,15 @@ func (uc *userService) Update(ctx context.Context, id uuid.UUID, params UserUpda
 
 	// map response
 	resp = UserUpdateResponse{
-		ID:          id,
-		RoleID:      params.RoleID,
-		WarehouseID: params.WarehouseID,
-		Name:        params.Name,
-		Email:       params.Email,
-		Password:    params.Password,
-		Phone:       params.Phone,
-		Gender:      params.Gender,
-		Birth:       params.Birth,
-		IsActive:    params.IsActive,
+		ID:       id,
+		RoleID:   params.RoleID,
+		Name:     params.Name,
+		Email:    params.Email,
+		Password: params.Password,
+		Phone:    params.Phone,
+		Gender:   params.Gender,
+		Birth:    params.Birth,
+		IsActive: params.IsActive,
 	}
 
 	return resp, errData

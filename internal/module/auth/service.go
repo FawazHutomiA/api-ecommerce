@@ -100,16 +100,15 @@ func (uc *authService) Register(ctx context.Context, params AuthRegisterRequest)
 	}
 
 	user := entity.User{
-		ID:          userID,
-		RoleID:      params.RoleID,
-		WarehouseID: params.WarehouseID,
-		Name:        params.Name,
-		Email:       params.Email,
-		Password:    &hashedPassword,
-		Phone:       params.Phone,
-		Gender:      params.Gender,
-		Birth:       params.Birth,
-		IsActive:    true,
+		ID:       userID,
+		RoleID:   params.RoleID,
+		Name:     params.Name,
+		Email:    params.Email,
+		Password: &hashedPassword,
+		Phone:    params.Phone,
+		Gender:   params.Gender,
+		Birth:    params.Birth,
+		IsActive: true,
 	}
 
 	// Transaction

@@ -5,22 +5,17 @@ const (
 		SELECT 
 			u.id,
 			u.role_id,
-			u.warehouse_id, 
 			u.name, 
 			u.email, 
 			u.phone, 
 			u.gender, 
 			u.birth,
 			u.is_active,
-			ac.name as role_name,
-			w.name as warehouse_name,
 			u.created_at
 		FROM 
 			users u
 		LEFT JOIN
 			access_role ac ON ac.id = u.role_id
-		LEFT JOIN
-			warehouse w ON w.id = u.warehouse_id
 		WHERE 
     		u.deleted_at IS NULL
 	`
@@ -29,7 +24,6 @@ const (
 		SELECT 
 			u.id,
 			u.role_id,
-			u.warehouse_id, 
 			u.name, 
 			u.email, 
 			u.phone, 
@@ -46,7 +40,6 @@ const (
 		SELECT 
 			u.id,
 			u.role_id,
-			u.warehouse_id, 
 			u.name, 
 			u.email, 
 			u.phone, 
@@ -78,7 +71,6 @@ const (
 			users (
 				id, 
 				role_id,
-				warehouse_id,
 				name,
 				email, 
 				password, 
@@ -96,8 +88,7 @@ const (
 			$6, 
 			$7,
 			$8,
-			$9,
-			$10
+			$9
 		)
 	`
 
@@ -106,14 +97,13 @@ const (
 			users
 		SET 
 			role_id = $2,
-			warehouse_id = $3,
-			name = $4,
-			email = $5,
-			password = $6,
-			phone = $7,
-			gender = $8,
-			birth = $9,
-			is_active = $10,
+			name = $3,
+			email = $4,
+			password = $5,
+			phone = $6,
+			gender = $7,
+			birth = $8,
+			is_active = $9,
 			updated_at = NOW()
 		WHERE 
 			id = $1
