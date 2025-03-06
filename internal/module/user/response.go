@@ -16,6 +16,7 @@ type UserCreateResponse struct {
 	Gender   string    `json:"gender"`
 	Birth    time.Time `json:"birth"`
 	IsActive bool      `json:"isActive"`
+	Image    *string   `json:"image"`
 }
 
 type UserUpdateResponse struct {
@@ -40,4 +41,5 @@ type UserDetailResponse struct {
 	Gender   string    `json:"gender"`
 	Birth    time.Time `json:"birth"`
 	IsActive bool      `json:"isActive"`
+	Image    *string   `json:"image"`
 }

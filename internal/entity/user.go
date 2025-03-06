@@ -16,6 +16,7 @@ type User struct {
 	Gender    string     `db:"gender" json:"gender"`
 	Birth     time.Time  `db:"birth" json:"birth"`
 	IsActive  bool       `db:"is_active" json:"isActive"`
+	Image     *string    `db:"image" json:"image"`
 	CreatedAt *time.Time `db:"created_at" json:"createdAt"`
 }
 
@@ -37,6 +38,7 @@ func (a *User) ToInsert() []interface{} {
 		a.Gender,
 		a.Birth,
 		a.IsActive,
+		a.Image,
 	}
 }
 

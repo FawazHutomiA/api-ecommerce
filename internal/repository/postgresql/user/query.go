@@ -11,11 +11,10 @@ const (
 			u.gender, 
 			u.birth,
 			u.is_active,
+			u.image,
 			u.created_at
 		FROM 
 			users u
-		LEFT JOIN
-			access_role ac ON ac.id = u.role_id
 		WHERE 
     		u.deleted_at IS NULL
 	`
@@ -29,7 +28,8 @@ const (
 			u.phone, 
 			u.gender, 
 			u.birth,
-			u.is_active
+			u.is_active,
+			u.image
 		FROM 
 			users u
 		WHERE 
@@ -45,7 +45,8 @@ const (
 			u.phone, 
 			u.gender, 
 			u.birth,
-			u.is_active
+			u.is_active,
+			u.image
 		FROM 
 			users u
 		WHERE 
@@ -77,7 +78,8 @@ const (
 				phone,
 				gender,
 				birth,
-				is_active
+				is_active,
+				image
 			) 
 		VALUES (
 			$1, 
@@ -88,7 +90,8 @@ const (
 			$6, 
 			$7,
 			$8,
-			$9
+			$9,
+			$10
 		)
 	`
 

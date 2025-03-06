@@ -82,6 +82,7 @@ func (uc *userService) Detail(ctx context.Context, id uuid.UUID) (resp UserDetai
 		Gender:   repoUser.Gender,
 		Birth:    repoUser.Birth,
 		IsActive: repoUser.IsActive,
+		Image:    repoUser.Image,
 	}
 
 	return resp, errData
@@ -131,6 +132,7 @@ func (uc *userService) Create(ctx context.Context, params UserCreateRequest) (re
 		Gender:   params.Gender,
 		Birth:    params.Birth,
 		IsActive: params.IsActive,
+		Image:    params.Image,
 	}
 
 	// Transaction
@@ -174,6 +176,7 @@ func (uc *userService) Create(ctx context.Context, params UserCreateRequest) (re
 		Gender:   params.Gender,
 		Birth:    params.Birth,
 		IsActive: params.IsActive,
+		Image:    params.Image,
 	}
 
 	return resp, errData

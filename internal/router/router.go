@@ -2,6 +2,7 @@ package router
 
 import (
 	"example/internal/module/auth"
+	"example/internal/module/cloudinary"
 	"example/internal/module/role"
 	"example/internal/module/user"
 	"example/pkg/app"
@@ -15,5 +16,6 @@ func SetupRoutes(r *chi.Mux, app app.AppConfig) {
 		auth.SetupAuthRoutes(r, app)
 		user.SetupUserRoutes(r, app)
 		role.SetupRoleRoutes(r, app)
+		cloudinary.SetupCloudinaryRoutes(r, app)
 	})
 }
