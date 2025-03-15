@@ -9,4 +9,5 @@ var (
 	ErrBadRequest       = fmt.Errorf("bad request")
 	ErrUnauthorized     = fmt.Errorf("unauthorized")
 	ErrMethodNotAllowed = fmt.Errorf("method not allowed")
+	ErrForbidden        = fmt.Errorf("request forbidden")
 )
