@@ -28,7 +28,8 @@ func UploadToCloudinary(file multipart.File, fileName string) (string, error) {
 	// Upload file langsung dari io.Reader
 	ctx := context.Background()
 	uploadResult, err := cld.Upload.Upload(ctx, file, uploader.UploadParams{
-		PublicID: fileName, // Nama file yang akan disimpan di Cloudinary
+		PublicID:       fileName, // Nama file yang akan disimpan di Cloudinary
+		Transformation: "w_1000,c_scale,q_auto,f_auto",
 	})
 	if err != nil {
 		log.Printf("Failed to upload: %v", err)
