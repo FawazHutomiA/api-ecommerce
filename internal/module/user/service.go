@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"example/internal/entity"
+	"example/internal/repository/postgresql/role"
 	"example/internal/repository/postgresql/token"
 	"example/internal/repository/postgresql/user"
 	"example/pkg/app"
@@ -28,13 +29,15 @@ type userService struct {
 	app        app.AppConfig
 	repository user.UserRepository
 	tokenRepo  token.TokenRepository
+	roleRepo   role.RoleRepository
 }
 
-func NewUserService(app app.AppConfig, repository user.UserRepository, tokenRepo token.TokenRepository) UserService {
+func NewUserService(app app.AppConfig, repository user.UserRepository, tokenRepo token.TokenRepository, roleRepo role.RoleRepository) UserService {
 	return &userService{
 		app:        app,
 		repository: repository,
 		tokenRepo:  tokenRepo,
+		roleRepo:   roleRepo,
 	}
 }
 
@@ -49,7 +52,52 @@ func (uc *userService) ListPaginate(ctx context.Context, params helper.Paginatio
 		}
 	}
 
-	return repo, errData
+	records, ok := repo.Records.(*[]entity.User)
+	if !ok {
+		return resp, exception.Error{
+			Status:  response.StatusInternalServerError,
+			Message: "Invalid record type",
+			Errors:  "failed to assert records to *[]domain.ReportCustomer",
+		}
+	}
+
+	var response []UserListlResponse
+	if len(*records) > 0 {
+		for _, v := range *records {
+			roleRepo, err := uc.roleRepo.RoleFindByID(ctx, v.RoleID)
+			if err != nil {
+				uc.app.Logger.Error(err)
+			}
+
+			response = append(response, UserListlResponse{
+				ID: v.ID,
+				RoleResponse: RoleResponse{
+					ID:   roleRepo.ID,
+					Name: roleRepo.Name,
+				},
+				Name:      v.Name,
+				Email:     v.Email,
+				Phone:     v.Phone,
+				Gender:    v.Gender,
+				Birth:     v.Birth,
+				IsActive:  v.IsActive,
+				Image:     v.Image,
+				CreatedAt: v.CreatedAt,
+			})
+		}
+	}
+
+	// Assign response to the Pagination struct
+	resp = helper.Pagination{
+		CurrentPage:  repo.CurrentPage,
+		PageSize:     repo.PageSize,
+		FirstPage:    repo.FirstPage,
+		LastPage:     repo.LastPage,
+		TotalRecords: repo.TotalRecords,
+		Records:      response, // Correctly set response to the Records field
+	}
+
+	return resp, errData
 }
 
 func (uc *userService) Detail(ctx context.Context, id uuid.UUID) (resp UserDetailResponse, errData exception.Error) {
@@ -72,17 +120,30 @@ func (uc *userService) Detail(ctx context.Context, id uuid.UUID) (resp UserDetai
 		}
 	}
 
+	roleRepo, err := uc.roleRepo.RoleFindByID(ctx, repoUser.RoleID)
+	if err != nil {
+		return resp, exception.Error{
+			Status:  response.StatusBadRequest,
+			Message: "Failed to get role by id",
+			Errors:  exception.ErrBadRequest,
+		}
+	}
+
 	// map response
 	resp = UserDetailResponse{
-		ID:       id,
-		RoleID:   repoUser.RoleID,
-		Name:     repoUser.Name,
-		Email:    repoUser.Email,
-		Phone:    repoUser.Phone,
-		Gender:   repoUser.Gender,
-		Birth:    repoUser.Birth,
-		IsActive: repoUser.IsActive,
-		Image:    repoUser.Image,
+		ID: id,
+		RoleResponse: RoleResponse{
+			ID:   roleRepo.ID,
+			Name: roleRepo.Name,
+		},
+		Name:      repoUser.Name,
+		Email:     repoUser.Email,
+		Phone:     repoUser.Phone,
+		Gender:    repoUser.Gender,
+		Birth:     repoUser.Birth,
+		IsActive:  repoUser.IsActive,
+		Image:     repoUser.Image,
+		CreatedAt: repoUser.CreatedAt,
 	}
 
 	return resp, errData
