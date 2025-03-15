@@ -43,3 +43,17 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
+
+// SuperAdminMiddleware untuk memeriksa apakah user memiliki role "super_admin"
+func SuperAdminMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		role, ok := r.Context().Value("role").(string)
+		if !ok || role != "super_admin" {
+			resp := response.Error(response.StatusForbiddend, "Forbidden", exception.ErrForbidden)
+			resp.JSON(w)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
